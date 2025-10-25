@@ -119,7 +119,13 @@ if (!session?.user) {
 
 /* ---------------------------- Armes.json ------------------------- */
 async function chargerArmes() {
-  const res = await fetch("./armes.json");
+  // ✅ chemin corrigé
+  const res = await fetch("./data/armes.json");
+  if (!res.ok) {
+    alert("⚠️ Impossible de charger les armes. Vérifie le chemin du fichier data/armes.json !");
+    return;
+  }
+
   armesData = await res.json();
 
   selType.innerHTML = `<option value="">Tous</option>`;
@@ -178,7 +184,6 @@ async function loadClasses() {
     cardsDiv.appendChild(card);
   });
 
-  // Modifier
   document.querySelectorAll("[data-edit]").forEach(btn => {
     btn.addEventListener("click", async e => {
       const id = e.currentTarget.getAttribute("data-edit");
@@ -199,7 +204,6 @@ async function loadClasses() {
     });
   });
 
-  // Renommer
   document.querySelectorAll("[data-rename]").forEach(btn=>{
     btn.addEventListener("click", async e=>{
       const id = e.currentTarget.getAttribute("data-rename");
@@ -211,7 +215,6 @@ async function loadClasses() {
     });
   });
 
-  // Supprimer
   document.querySelectorAll("[data-del]").forEach(btn => {
     btn.addEventListener("click", async e => {
       const id = e.currentTarget.getAttribute("data-del");
@@ -226,14 +229,12 @@ async function loadClasses() {
 
 /* ------------------------ Boutons principaux -------------------- */
 
-// Déconnexion
 logoutBtn.addEventListener("click", async ()=>{
   const { error } = await supabase.auth.signOut();
   if (error) return alert("❌ " + error.message);
   location.href = "login.html";
 });
 
-// Enregistrer (modal nom)
 saveBtn.addEventListener("click", async ()=>{
   if (!selArme.value) return alert("Sélectionne une arme avant d’enregistrer.");
   const name = await openModal("Nom de la classe", "Ex: Fusil AK24 rapide");
@@ -245,7 +246,6 @@ saveBtn.addEventListener("click", async ()=>{
   await loadClasses();
 });
 
-// Exporter JSON
 exportBtn.addEventListener("click", ()=>{
   if (!selArme.value) return alert("Sélectionne une arme à exporter.");
   const data = getPayload();
@@ -257,7 +257,6 @@ exportBtn.addEventListener("click", ()=>{
   URL.revokeObjectURL(a.href);
 });
 
-// Importer JSON
 importIn.addEventListener("change", async (e)=>{
   const file = e.target.files?.[0]; if (!file) return;
   const txt = await file.text();
@@ -277,7 +276,6 @@ importIn.addEventListener("change", async (e)=>{
   importIn.value = "";
 });
 
-// Partager
 shareBtn.addEventListener("click", async ()=>{
   if (!selArme.value) return alert("Sélectionne une arme avant de partager.");
   const payload = getPayload();
