@@ -1,5 +1,6 @@
-/* ===== Chargement des données ===== */
-let dbData = null; // armes.json chargé
+/* script.js — version FR pour ton format armes.json (clés : nom, categorie, stats.degats, cadence, portee) */
+
+let dbData = null;
 const LS_KEY = "bf6_classes_v1";
 
 async function loadData() {
@@ -14,35 +15,40 @@ async function loadData() {
   }
 }
 
+function $(q){ return document.querySelector(q); }
+function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
 function hydrateUI() {
   // Types
-  const types = [...new Set((dbData.weapons || []).map(w => w.category))].sort();
+  const types = [...new Set((dbData.armes || []).map(w => w.categorie))].sort();
   const selType = $("#weaponType");
   selType.innerHTML = `<option value="">Tous</option>` + types.map(t => `<option value="${t}">${cap(t)}</option>`).join("");
 
   // Armes
   fillWeapons();
 
-  // Accessoires (slots génériques)
-  const slots = dbData.attachments?.attachments || {}; // {sights: [...], barrels: [...]}
-  ["sights","barrels","muzzles","underbarrels","magazines","stocks","camouflages"].forEach(slot=>{
-    fillSelect(`#slot-${slot}`, slots[slot] || ["—"]);
-  });
+  // Accessoires
+  const slots = dbData.accessoires || {};
+  fillSelect("#slot-sights", slots.viseurs || ["—"]);
+  fillSelect("#slot-barrels", slots.canons || ["—"]);
+  fillSelect("#slot-muzzles", slots.bouches || ["—"]);
+  fillSelect("#slot-underbarrels", slots["sous-canons"] || ["—"]);
+  fillSelect("#slot-magazines", slots.chargeurs || ["—"]);
+  fillSelect("#slot-stocks", slots.crosses || ["—"]);
+  fillSelect("#slot-camouflages", slots.camouflages || ["—"]);
 
-  // Gadgets / Grenades
+  // Gadgets / grenades
   fillSelect("#gadget1", dbData.gadgets || []);
   fillSelect("#gadget2", dbData.gadgets || []);
   fillSelect("#grenade", dbData.grenades || []);
 
-  // Rendu des classes
+  // Render classes
   renderCards();
 }
 
-/* ===== Helpers UI ===== */
-function $(q){ return document.querySelector(q); }
-function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
-function fillSelect(sel, arr){
-  const el = typeof sel === "string" ? $(sel) : sel;
+function fillSelect(selSelector, arr){
+  const el = document.querySelector(selSelector);
+  if(!el) return;
   el.innerHTML = (arr||[]).map(v=>`<option>${v}</option>`).join("");
 }
 
@@ -50,39 +56,39 @@ function fillWeapons() {
   const type = $("#weaponType").value;
   const search = $("#searchBar").value.trim().toLowerCase();
   const sel = $("#weaponName");
-  const list = (dbData.weapons || [])
-    .filter(w => !type || w.category === type)
-    .filter(w => !search || w.name.toLowerCase().includes(search))
-    .sort((a,b)=>a.name.localeCompare(b.name));
+  const list = (dbData.armes || [])
+    .filter(w => !type || w.categorie === type)
+    .filter(w => !search || w.nom.toLowerCase().includes(search))
+    .sort((a,b)=>a.nom.localeCompare(b.nom));
 
-  sel.innerHTML = `<option value="">— Choisir —</option>` + list.map(w=>`<option value="${w.name}" data-type="${w.category}">${w.name}</option>`).join("");
+  sel.innerHTML = `<option value="">— Choisir —</option>` + list.map(w=>`<option value="${w.nom}" data-type="${w.categorie}">${w.nom}</option>`).join("");
 }
 
-/* ===== Events filtres & recherche ===== */
+/* Events */
 $("#weaponType").addEventListener("change", fillWeapons);
 $("#searchBar").addEventListener("input", fillWeapons);
 
-/* ===== Stats ===== */
+/* Stats affichage */
 $("#weaponName").addEventListener("change", e=>{
   const name = e.target.value;
-  const arme = (dbData.weapons || []).find(w => w.name === name);
+  const arme = (dbData.armes || []).find(w => w.nom === name);
   const box = $("#weaponStats");
   if (!arme) { box.innerHTML = "<p>Sélectionne une arme pour afficher ses statistiques.</p>"; return; }
   const s = arme.stats || {};
   box.innerHTML = `
     <div class="flex items-baseline gap-2 mb-1">
-      <h3 class="text-lg font-semibold text-blue-300">${arme.name}</h3>
-      <span class="text-xs text-gray-400">${cap(arme.category)}</span>
+      <h3 class="text-lg font-semibold text-blue-300">${arme.nom}</h3>
+      <span class="text-xs text-gray-400">${cap(arme.categorie)}</span>
     </div>
     <div class="grid grid-cols-3 gap-2">
-      <div>⚔️ Dégâts<br><span class="text-blue-200">${s.damage ?? "—"}</span></div>
-      <div>⚡ Cadence<br><span class="text-blue-200">${s.fireRate ?? "—"}</span></div>
-      <div>📏 Portée<br><span class="text-blue-200">${s.range ?? "—"}</span></div>
+      <div>⚔️ Dégâts<br><span class="text-blue-200">${s.degats ?? "—"}</span></div>
+      <div>⚡ Cadence<br><span class="text-blue-200">${s.cadence ?? "—"}</span></div>
+      <div>📏 Portée<br><span class="text-blue-200">${s.portee ?? "—"}</span></div>
     </div>
   `;
 });
 
-/* ===== Sauvegarde de classe ===== */
+/* Sauvegarde classe */
 $("#saveBtn").addEventListener("click", ()=>{
   const weapon = $("#weaponName").value;
   if (!weapon) return alert("Choisis une arme d'abord.");
@@ -140,7 +146,6 @@ function renderCards(){
     </div>
   `).join("");
 
-  // actions
   wrap.querySelectorAll(".del").forEach(b=>b.addEventListener("click", e=>{
     const id = e.target.dataset.id;
     const arr = loadClasses().filter(x=>x.id !== id);
@@ -154,7 +159,7 @@ function renderCards(){
   }));
 }
 
-/* ===== Export / Import ===== */
+/* Export / Import */
 $("#exportBtn").addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(loadClasses(), null, 2)], {type:"application/json"});
   const a = document.createElement("a");
@@ -179,7 +184,7 @@ $("#importInput").addEventListener("change", (ev)=>{
   ev.target.value = "";
 });
 
-/* ===== Partage ===== */
+/* Partage */
 $("#shareBtn").addEventListener("click", ()=>{
   const cls = loadClasses()[0];
   if (!cls) return alert("Enregistre d’abord une classe.");
@@ -189,7 +194,6 @@ $("#shareBtn").addEventListener("click", ()=>{
   navigator.clipboard.writeText(url.toString()).then(()=>alert("🔗 Lien copié !"));
 });
 
-// Si un lien partagé contient ?class=...
 (function loadShared(){
   const p = new URLSearchParams(location.search).get("class");
   if (!p) return;
@@ -201,5 +205,4 @@ $("#shareBtn").addEventListener("click", ()=>{
   } catch {}
 })();
 
-/* ===== Boot ===== */
 window.addEventListener("DOMContentLoaded", loadData);
