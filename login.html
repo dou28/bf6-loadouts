@@ -25,10 +25,9 @@
   </div>
 
   <script>
-    // ✅ Déclaration unique ici
     const auth = firebase.auth();
 
-    // Fonctions globales
+    // Connexion avec email/mot de passe
     window.loginEmailPassword = function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -37,6 +36,7 @@
         .catch(err => alert("❌ " + err.message));
     }
 
+    // Création de compte
     window.registerEmailPassword = function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
@@ -45,6 +45,7 @@
         .catch(err => alert("❌ " + err.message));
     }
 
+    // Connexion via Google
     window.loginGoogle = function() {
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider)
