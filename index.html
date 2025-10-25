@@ -20,7 +20,7 @@
       transition: all .25s ease;
       z-index: 40;
     }
-    #saveNotif.show { opacity: 1; transform: translateY(0) }
+    #saveNotif.show { opacity: 1; transform: translateY(0); }
     .modal-bg {
       position: fixed; inset: 0;
       background: rgba(0,0,0,.6);
@@ -83,8 +83,13 @@
       <div><label class="block text-sm mb-1">Grenade</label><select id="grenade" class="w-full bg-slate-700 p-2 rounded"></select></div>
     </div>
 
-    <div id="weaponStats" class="bg-slate-700 p-4 rounded text-sm text-gray-200">
+    <div id="weaponStats" class="bg-slate-700 p-4 rounded text-sm text-gray-200 mb-3">
       <p>Sélectionne une arme pour afficher ses statistiques.</p>
+    </div>
+
+    <!-- 🆕 Aperçu visuel de l’arme -->
+    <div id="weaponPreview" class="mt-4 flex justify-center">
+      <img id="weaponImage" src="" alt="Aperçu de l'arme" class="max-h-64 rounded-lg hidden border border-slate-700 shadow-lg" />
     </div>
 
     <h2 class="mt-8 mb-2 font-semibold text-gray-300">Mes classes</h2>
