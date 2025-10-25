@@ -1,5 +1,4 @@
-// firebase-config.js
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyD4O388ofZ9ZT6F0KDEjbcjc4gPNEyOxNc",
   authDomain: "bf6-loadouts.firebaseapp.com",
   projectId: "bf6-loadouts",
