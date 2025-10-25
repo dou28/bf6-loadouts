@@ -1,0 +1,47 @@
+{
+  "weapons": [
+    { "name": "M5A3", "category": "assault", "stats": { "damage": 26, "fireRate": 800, "range": 600 } },
+    { "name": "AK-24", "category": "assault", "stats": { "damage": 30, "fireRate": 680, "range": 550 } },
+    { "name": "SFAR-M GL", "category": "assault", "stats": { "damage": 42, "fireRate": 600, "range": 550 } },
+    { "name": "AC-42", "category": "assault", "stats": { "damage": 28, "fireRate": 1200, "range": 500 } },
+
+    { "name": "PBX-45", "category": "smg", "stats": { "damage": 25, "fireRate": 950, "range": 400 } },
+    { "name": "PP-29", "category": "smg", "stats": { "damage": 27, "fireRate": 750, "range": 420 } },
+    { "name": "MP9", "category": "smg", "stats": { "damage": 21, "fireRate": 950, "range": 350 } },
+
+    { "name": "DM7", "category": "marksman", "stats": { "damage": 45, "fireRate": 320, "range": 800 } },
+    { "name": "SVK", "category": "marksman", "stats": { "damage": 55, "fireRate": 260, "range": 850 } },
+    { "name": "VCar", "category": "marksman", "stats": { "damage": 43, "fireRate": 350, "range": 780 } },
+
+    { "name": "SWS-10", "category": "sniper", "stats": { "damage": 95, "fireRate": 45, "range": 1200 } },
+    { "name": "DXR-1", "category": "sniper", "stats": { "damage": 95, "fireRate": 40, "range": 1300 } },
+    { "name": "NTW-50", "category": "sniper", "stats": { "damage": 110, "fireRate": 30, "range": 1500 } },
+
+    { "name": "MCS-880", "category": "shotgun", "stats": { "damage": 100, "fireRate": 120, "range": 120 } },
+    { "name": "12M Auto", "category": "shotgun", "stats": { "damage": 70, "fireRate": 240, "range": 150 } },
+
+    { "name": "PKP-BP", "category": "lmg", "stats": { "damage": 30, "fireRate": 600, "range": 700 } },
+    { "name": "LCMG", "category": "lmg", "stats": { "damage": 28, "fireRate": 750, "range": 650 } },
+    { "name": "RPK-74", "category": "lmg", "stats": { "damage": 32, "fireRate": 670, "range": 680 } }
+  ],
+
+  "attachments": {
+    "attachments": {
+      "sights": ["Reflex 1x", "Holographic", "ACOG 4x", "6x Scope", "Night Vision"],
+      "barrels": ["Standard", "Short Barrel", "Long Barrel"],
+      "muzzles": ["Silencer", "Compensator", "Muzzle Brake"],
+      "underbarrels": ["Vertical Grip", "Angled Grip", "Bipod"],
+      "magazines": ["Standard", "Extended", "Fast Reload", "High Velocity"],
+      "stocks": ["Standard Stock", "Recoil Stock", "Lightweight Stock"],
+      "camouflages": ["Standard", "Urban", "Forest", "Digital", "Desert", "Gold"]
+    }
+  },
+
+  "gadgets": [
+    "Spawn Beacon", "C5 Explosif", "Reco Drone", "Ammo Crate", "Medical Crate", "Repair Tool"
+  ],
+
+  "grenades": [
+    "Frag", "Smoke", "EMP", "Flash", "Incendiary"
+  ]
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configurateur Battlefield 6</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-3xl bg-slate-800/80 rounded-2xl shadow-xl p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold text-blue-300">⚙️ Configurateur Battlefield 6</h1>
+      <div class="flex gap-2">
+        <button id="saveBtn" class="px-3 py-2 bg-blue-600 rounded hover:bg-blue-500">Enregistrer</button>
+        <button id="exportBtn" class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600">Exporter</button>
+        <label class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600 cursor-pointer">
+          Importer <input id="importInput" type="file" accept="application/json" class="hidden">
+        </label>
+        <button id="shareBtn" class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-500">Partager</button>
+      </div>
+    </div>
+
+    <!-- Recherche -->
+    <input id="searchBar" type="text" placeholder="🔍 Rechercher une arme..."
+      class="w-full p-2 rounded bg-slate-700 mb-4">
+
+    <!-- Sélecteurs -->
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <label for="weaponType" class="block text-sm mb-1 text-gray-300">Type d’arme</label>
+        <select id="weaponType" class="w-full bg-slate-700 p-2 rounded"></select>
+      </div>
+      <div>
+        <label for="weaponName" class="block text-sm mb-1 text-gray-300">Arme</label>
+        <select id="weaponName" class="w-full bg-slate-700 p-2 rounded"></select>
+      </div>
+    </div>
+
+    <!-- Accessoires (slots génériques) -->
+    <div id="slots" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+      <div><label class="block text-sm mb-1">Viseur</label><select id="slot-sights" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div><label class="block text-sm mb-1">Canon</label><select id="slot-barrels" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div><label class="block text-sm mb-1">Bouche</label><select id="slot-muzzles" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div><label class="block text-sm mb-1">Sous-canon</label><select id="slot-underbarrels" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div><label class="block text-sm mb-1">Chargeur</label><select id="slot-magazines" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div><label class="block text-sm mb-1">Crosse</label><select id="slot-stocks" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div class="md:col-span-3"><label class="block text-sm mb-1">Camouflage</label><select id="slot-camouflages" class="w-full bg-slate-700 p-2 rounded"></select></div>
+    </div>
+
+    <!-- Gadgets / Grenade -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div><label class="block text-sm mb-1">Gadget 1</label><select id="gadget1" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div><label class="block text-sm mb-1">Gadget 2</label><select id="gadget2" class="w-full bg-slate-700 p-2 rounded"></select></div>
+      <div><label class="block text-sm mb-1">Grenade</label><select id="grenade" class="w-full bg-slate-700 p-2 rounded"></select></div>
+    </div>
+
+    <!-- Stats -->
+    <div id="weaponStats" class="bg-slate-700 p-4 rounded text-sm text-gray-200">
+      <p>Sélectionne une arme pour afficher ses statistiques.</p>
+    </div>
+
+    <!-- Liste des classes -->
+    <h2 class="mt-8 mb-2 font-semibold text-gray-300">Mes classes</h2>
+    <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+  </div>
+
+  <script src="./script.js"></script>
+</body>
+</html>

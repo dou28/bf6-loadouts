@@ -1,0 +1,11 @@
+{
+  "attachments": {
+    "sights": ["Reflex 1x","Holographic","ACOG 4x","6x Scope","8x Scope","10x Scope"],
+    "barrels": ["Standard","Short Barrel","Long Barrel","Heavy Barrel"],
+    "muzzles": ["Silencer","Suppressor","Compensator","Muzzle Brake","Double Vent Brake"],
+    "underbarrels": ["Vertical Grip","Angled Grip","Bipod","Laser"],
+    "magazines": ["Standard","Extended","Fast Reload","High Velocity"],
+    "stocks": ["Standard Stock","Lightweight Stock","Recoil Stock","Marksman Stock","Tactical Stock"],
+    "camouflages": ["Standard","Digital","Urban","Forest","Élaboussure"]
+  }
+}

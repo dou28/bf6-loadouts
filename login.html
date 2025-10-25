@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Connexion - BF6 Loadouts</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="./firebase-config.js"></script>
+  <style>
+    body{font-family:Inter,system-ui;background:#0f172a;color:#e2e8f0;
+         display:flex;flex-direction:column;align-items:center;justify-content:center;
+         height:100vh;margin:0}
+    form{background:#111827;padding:20px;border-radius:12px;box-shadow:0 0 20px rgba(0,0,0,.3);width:300px}
+    h1{text-align:center;color:#60a5fa;margin-bottom:10px}
+    input{width:100%;padding:10px;border-radius:8px;border:1px solid #1e293b;background:#0f172a;color:#f8fafc;margin-bottom:10px}
+    button{width:100%;padding:10px;border:0;border-radius:8px;background:#2563eb;color:#fff;font-weight:600;cursor:pointer;margin-bottom:8px}
+    button:hover{background:#1d4ed8}
+    .small{text-align:center;margin-top:10px;color:#94a3b8;font-size:13px}
+    .google{background:#db4437}
+  </style>
+</head>
+<body>
+  <form id="loginForm">
+    <h1>BF6 Loadouts</h1>
+    <input id="email" type="email" placeholder="Email" required>
+    <input id="password" type="password" placeholder="Mot de passe" required>
+    <button type="submit">Se connecter / S'inscrire</button>
+    <button type="button" class="google" id="googleBtn">Connexion Google</button>
+    <div class="small">⚔️ Configurateur de classes Battlefield 6</div>
+  </form>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    loginForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        window.location.href = "index.html";
+      } catch (err) {
+        // Si l'utilisateur n'existe pas, créer un compte
+        await auth.createUserWithEmailAndPassword(email, password);
+        window.location.href = "index.html";
+      }
+    });
+
+    document.getElementById('googleBtn').addEventListener('click', async ()=>{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithPopup(provider);
+      window.location.href = "index.html";
+    });
+  </script>
+</body>
+</html>
