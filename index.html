@@ -10,6 +10,28 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
   <script src="./script.js"></script>
+  <style>
+    /* Style de la notification en bas à droite */
+    #saveNotif {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #22c55e;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.4s ease;
+      z-index: 50;
+    }
+    #saveNotif.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
 </head>
 
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
@@ -75,7 +97,10 @@
     <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
   </div>
 
-  <!-- SCRIPT FIREBASE ET FONCTIONNALITÉS -->
+  <!-- Notification visuelle -->
+  <div id="saveNotif">💾 Classe sauvegardée !</div>
+
+  <!-- SCRIPT FIREBASE ET AUTO-SAVE -->
   <script>
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -83,7 +108,7 @@
     let currentUser = null;
     let currentLoadout = null;
 
-    // ✅ Vérification de session
+    // ✅ Vérifie la session utilisateur
     auth.onAuthStateChanged(async user => {
       if (!user) {
         window.location.href = "login.html";
@@ -101,7 +126,7 @@
       auth.signOut().then(() => (window.location.href = "login.html"));
     });
 
-    // 💾 Ajouter une nouvelle classe
+    // 💾 Enregistrer une nouvelle classe
     document.getElementById("saveBtn").addEventListener("click", async () => {
       if (!currentUser) return alert("Connecte-toi pour sauvegarder ta classe.");
       const nouvelleClasse = getCurrentLoadout();
@@ -111,7 +136,7 @@
           .doc(currentUser.uid)
           .collection("classes")
           .add(nouvelleClasse);
-        alert("✅ Nouvelle classe enregistrée !");
+        showNotif("✅ Nouvelle classe enregistrée !");
         await chargerClasses();
       } catch (err) {
         alert("❌ Erreur : " + err.message);
@@ -141,7 +166,7 @@
       };
     }
 
-    // 🔁 Sauvegarde automatique toutes les 5s
+    // 🔁 Sauvegarde automatique avec notification
     function setupAutoSave() {
       let lastConfig = JSON.stringify(getCurrentLoadout());
       setInterval(async () => {
@@ -154,7 +179,7 @@
               .collection("classes")
               .doc(currentLoadout.id)
               .update(getCurrentLoadout());
-            console.log("💾 Auto-sauvegarde effectuée !");
+            showNotif("💾 Classe sauvegardée !");
           } catch (err) {
             console.warn("Erreur auto-save:", err.message);
           }
@@ -163,7 +188,7 @@
       }, 5000);
     }
 
-    // 📜 Charger les classes
+    // 📜 Charger les classes enregistrées
     async function chargerClasses() {
       if (!currentUser) return;
       const snapshot = await db.collection("users")
@@ -194,6 +219,7 @@
         cards.appendChild(div);
       });
 
+      // Boutons Modifier
       document.querySelectorAll("[data-id]").forEach(btn => {
         btn.addEventListener("click", async e => {
           const id = e.target.getAttribute("data-id");
@@ -206,6 +232,7 @@
         });
       });
 
+      // Boutons Supprimer
       document.querySelectorAll("[data-del]").forEach(btn => {
         btn.addEventListener("click", async e => {
           const id = e.target.getAttribute("data-del");
@@ -217,7 +244,7 @@
       });
     }
 
-    // 🎯 Charger une classe sélectionnée
+    // 🎯 Charger une classe dans les menus
     function chargerClasseDansUI(id, data) {
       currentLoadout = { id, ...data };
       document.getElementById("weaponType").value = data.type;
@@ -233,6 +260,14 @@
       document.getElementById("gadget2").value = data.gadgets.g2;
       document.getElementById("grenade").value = data.gadgets.grenade;
       console.log("🧰 Classe chargée :", data.arme);
+    }
+
+    // ✨ Affiche une notification
+    function showNotif(message) {
+      const notif = document.getElementById("saveNotif");
+      notif.textContent = message;
+      notif.classList.add("show");
+      setTimeout(() => notif.classList.remove("show"), 2500);
     }
   </script>
 </body>
