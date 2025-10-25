@@ -25,11 +25,10 @@
   </div>
 
   <script>
-    // ⚙️ Firebase est déjà initialisé par firebase-config.js
-    // donc on NE redéclare PAS "auth" ici
+    // ✅ Déclaration unique ici
     const auth = firebase.auth();
 
-    // ✅ Fonctions globales
+    // Fonctions globales
     window.loginEmailPassword = function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
