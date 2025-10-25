@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configurateur Battlefield 6</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="./firebase-config.js"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
   <div class="w-full max-w-3xl bg-slate-800/80 rounded-2xl shadow-xl p-6">
@@ -36,7 +42,7 @@
       </div>
     </div>
 
-    <!-- Accessoires (slots génériques) -->
+    <!-- Accessoires -->
     <div id="slots" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
       <div><label class="block text-sm mb-1">Viseur</label><select id="slot-sights" class="w-full bg-slate-700 p-2 rounded"></select></div>
       <div><label class="block text-sm mb-1">Canon</label><select id="slot-barrels" class="w-full bg-slate-700 p-2 rounded"></select></div>
@@ -47,7 +53,7 @@
       <div class="md:col-span-3"><label class="block text-sm mb-1">Camouflage</label><select id="slot-camouflages" class="w-full bg-slate-700 p-2 rounded"></select></div>
     </div>
 
-    <!-- Gadgets / Grenade -->
+    <!-- Gadgets / Grenades -->
     <div class="grid grid-cols-3 gap-4 mb-6">
       <div><label class="block text-sm mb-1">Gadget 1</label><select id="gadget1" class="w-full bg-slate-700 p-2 rounded"></select></div>
       <div><label class="block text-sm mb-1">Gadget 2</label><select id="gadget2" class="w-full bg-slate-700 p-2 rounded"></select></div>
@@ -64,12 +70,13 @@
     <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
   </div>
 
-  <script src="./script.js"></script>
+  <!-- Auth check -->
   <script>
-firebase.auth().onAuthStateChanged(user => {
-  if (!user) window.location.href = "login.html";
-});
-</script>
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) window.location.href = "login.html";
+    });
+  </script>
 
+  <script src="./script.js"></script>
 </body>
 </html>
