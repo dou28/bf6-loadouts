@@ -1,208 +1,214 @@
-/* script.js — version FR pour ton format armes.json (clés : nom, categorie, stats.degats, cadence, portee) */
+const auth = firebase.auth();
+const db = firebase.firestore();
+let currentUser = null;
+let currentLoadout = null;
+let armesData = null;
 
-let dbData = null;
-const LS_KEY = "bf6_classes_v1";
+// ✅ Initialisation
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return (window.location.href = "login.html");
+  currentUser = user;
+  document.getElementById("userName").textContent =
+    "Bienvenue, " + (user.displayName || user.email);
+  await chargerArmes();
+  await chargerClasses();
+  setupAutoSave();
+});
 
-async function loadData() {
+// 🚪 Déconnexion
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  auth.signOut().then(() => (window.location.href = "login.html"));
+});
+
+// ⚙️ Chargement des armes depuis armes.json
+async function chargerArmes() {
   try {
-    const res = await fetch("./armes.json", { cache: "no-store" });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    dbData = await res.json();
-    hydrateUI();
-  } catch (e) {
-    console.error("Chargement armes.json échoué:", e);
-    alert("⚠️ Impossible de charger armes.json. Vérifie qu'il est dans le même dossier que index.html et lance le site via http (ex: npx serve).");
+    const res = await fetch("./armes.json");
+    armesData = await res.json();
+
+    const types = [...new Set(armesData.armes.map((a) => a.categorie))];
+    const selectType = document.getElementById("weaponType");
+    selectType.innerHTML = `<option value="">Tous</option>`;
+    types.forEach((t) => {
+      selectType.innerHTML += `<option value="${t}">${t}</option>`;
+    });
+
+    remplirArmes();
+
+    selectType.addEventListener("change", remplirArmes);
+    document.getElementById("weaponName").addEventListener("change", afficherStats);
+
+    remplirSelects("slot-sights", armesData.accessoires.viseurs);
+    remplirSelects("slot-barrels", armesData.accessoires.canons);
+    remplirSelects("slot-muzzles", armesData.accessoires.bouches);
+    remplirSelects("slot-underbarrels", armesData.accessoires["sous-canons"]);
+    remplirSelects("slot-magazines", armesData.accessoires.chargeurs);
+    remplirSelects("slot-stocks", armesData.accessoires.crosses);
+    remplirSelects("slot-camouflages", armesData.accessoires.camouflages);
+    remplirSelects("gadget1", armesData.gadgets);
+    remplirSelects("gadget2", armesData.gadgets);
+    remplirSelects("grenade", armesData.grenades);
+  } catch (err) {
+    console.error("Erreur chargement armes :", err);
   }
 }
 
-function $(q){ return document.querySelector(q); }
-function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
-
-function hydrateUI() {
-  // Types
-  const types = [...new Set((dbData.armes || []).map(w => w.categorie))].sort();
-  const selType = $("#weaponType");
-  selType.innerHTML = `<option value="">Tous</option>` + types.map(t => `<option value="${t}">${cap(t)}</option>`).join("");
-
-  // Armes
-  fillWeapons();
-
-  // Accessoires
-  const slots = dbData.accessoires || {};
-  fillSelect("#slot-sights", slots.viseurs || ["—"]);
-  fillSelect("#slot-barrels", slots.canons || ["—"]);
-  fillSelect("#slot-muzzles", slots.bouches || ["—"]);
-  fillSelect("#slot-underbarrels", slots["sous-canons"] || ["—"]);
-  fillSelect("#slot-magazines", slots.chargeurs || ["—"]);
-  fillSelect("#slot-stocks", slots.crosses || ["—"]);
-  fillSelect("#slot-camouflages", slots.camouflages || ["—"]);
-
-  // Gadgets / grenades
-  fillSelect("#gadget1", dbData.gadgets || []);
-  fillSelect("#gadget2", dbData.gadgets || []);
-  fillSelect("#grenade", dbData.grenades || []);
-
-  // Render classes
-  renderCards();
+// 🔁 Remplir les sélecteurs
+function remplirSelects(id, liste) {
+  const s = document.getElementById(id);
+  s.innerHTML = "";
+  liste.forEach((item) => {
+    s.innerHTML += `<option>${item}</option>`;
+  });
 }
 
-function fillSelect(selSelector, arr){
-  const el = document.querySelector(selSelector);
-  if(!el) return;
-  el.innerHTML = (arr||[]).map(v=>`<option>${v}</option>`).join("");
+// 🔫 Remplir la liste des armes selon le type
+function remplirArmes() {
+  const type = document.getElementById("weaponType").value;
+  const selectArme = document.getElementById("weaponName");
+  selectArme.innerHTML = `<option value="">— Choisir —</option>`;
+  armesData.armes
+    .filter((a) => !type || a.categorie === type)
+    .forEach((a) => {
+      selectArme.innerHTML += `<option value="${a.nom}">${a.nom}</option>`;
+    });
 }
 
-function fillWeapons() {
-  const type = $("#weaponType").value;
-  const search = $("#searchBar").value.trim().toLowerCase();
-  const sel = $("#weaponName");
-  const list = (dbData.armes || [])
-    .filter(w => !type || w.categorie === type)
-    .filter(w => !search || w.nom.toLowerCase().includes(search))
-    .sort((a,b)=>a.nom.localeCompare(b.nom));
+// 📊 Afficher les statistiques d’une arme
+function afficherStats() {
+  const armeNom = document.getElementById("weaponName").value;
+  const arme = armesData.armes.find((a) => a.nom === armeNom);
+  const statsDiv = document.getElementById("weaponStats");
 
-  sel.innerHTML = `<option value="">— Choisir —</option>` + list.map(w=>`<option value="${w.nom}" data-type="${w.categorie}">${w.nom}</option>`).join("");
-}
+  if (!arme) {
+    statsDiv.innerHTML = "<p>Sélectionne une arme pour afficher ses statistiques.</p>";
+    return;
+  }
 
-/* Events */
-$("#weaponType").addEventListener("change", fillWeapons);
-$("#searchBar").addEventListener("input", fillWeapons);
-
-/* Stats affichage */
-$("#weaponName").addEventListener("change", e=>{
-  const name = e.target.value;
-  const arme = (dbData.armes || []).find(w => w.nom === name);
-  const box = $("#weaponStats");
-  if (!arme) { box.innerHTML = "<p>Sélectionne une arme pour afficher ses statistiques.</p>"; return; }
-  const s = arme.stats || {};
-  box.innerHTML = `
-    <div class="flex items-baseline gap-2 mb-1">
-      <h3 class="text-lg font-semibold text-blue-300">${arme.nom}</h3>
-      <span class="text-xs text-gray-400">${cap(arme.categorie)}</span>
-    </div>
-    <div class="grid grid-cols-3 gap-2">
-      <div>⚔️ Dégâts<br><span class="text-blue-200">${s.degats ?? "—"}</span></div>
-      <div>⚡ Cadence<br><span class="text-blue-200">${s.cadence ?? "—"}</span></div>
-      <div>📏 Portée<br><span class="text-blue-200">${s.portee ?? "—"}</span></div>
+  statsDiv.innerHTML = `
+    <div class="flex justify-between">
+      <div><strong>${arme.nom}</strong> — ${arme.categorie}</div>
+      <div class="text-sm text-gray-400">${arme.stats.degats} dmg | ${arme.stats.cadence} RPM | ${arme.stats.portee} m</div>
     </div>
   `;
-});
+}
 
-/* Sauvegarde classe */
-$("#saveBtn").addEventListener("click", ()=>{
-  const weapon = $("#weaponName").value;
-  if (!weapon) return alert("Choisis une arme d'abord.");
-  const cls = {
-    id: "c_"+Math.random().toString(36).slice(2,9),
-    createdAt: Date.now(),
-    weaponType: $("#weaponType").value || "",
-    weaponName: weapon,
-    slots: {
-      sights: $("#slot-sights").value,
-      barrels: $("#slot-barrels").value,
-      muzzles: $("#slot-muzzles").value,
-      underbarrels: $("#slot-underbarrels").value,
-      magazines: $("#slot-magazines").value,
-      stocks: $("#slot-stocks").value,
-      camouflages: $("#slot-camouflages").value
+// 📦 Récupérer la config actuelle
+function getCurrentLoadout() {
+  return {
+    arme: document.getElementById("weaponName").value,
+    type: document.getElementById("weaponType").value,
+    accessoires: {
+      viseur: document.getElementById("slot-sights").value,
+      canon: document.getElementById("slot-barrels").value,
+      bouche: document.getElementById("slot-muzzles").value,
+      sousCanon: document.getElementById("slot-underbarrels").value,
+      chargeur: document.getElementById("slot-magazines").value,
+      crosse: document.getElementById("slot-stocks").value,
+      camouflage: document.getElementById("slot-camouflages").value,
     },
-    gadget1: $("#gadget1").value,
-    gadget2: $("#gadget2").value,
-    grenade: $("#grenade").value
+    gadgets: {
+      g1: document.getElementById("gadget1").value,
+      g2: document.getElementById("gadget2").value,
+      grenade: document.getElementById("grenade").value,
+    },
+    date: new Date().toISOString(),
   };
-  const arr = loadClasses();
-  arr.unshift(cls);
-  saveClasses(arr);
-  renderCards();
-  alert("✅ Classe enregistrée !");
+}
+
+// 💾 Enregistrer manuellement
+document.getElementById("saveBtn").addEventListener("click", async () => {
+  if (!currentUser) return alert("Connecte-toi pour sauvegarder ta classe.");
+  const classe = getCurrentLoadout();
+  if (!classe.arme) return alert("Choisis une arme avant d’enregistrer.");
+
+  await db.collection("users").doc(currentUser.uid).collection("classes").add(classe);
+  showNotif("✅ Classe enregistrée !");
+  await chargerClasses();
 });
 
-function loadClasses(){
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || "[]"); } catch { return []; }
-}
-function saveClasses(arr){
-  localStorage.setItem(LS_KEY, JSON.stringify(arr));
+// 🔁 Auto-save
+function setupAutoSave() {
+  let lastConfig = JSON.stringify(getCurrentLoadout());
+  setInterval(async () => {
+    if (!currentUser || !currentLoadout) return;
+    const newConfig = JSON.stringify(getCurrentLoadout());
+    if (newConfig !== lastConfig) {
+      await db.collection("users").doc(currentUser.uid).collection("classes").doc(currentLoadout.id).update(getCurrentLoadout());
+      showNotif("💾 Classe sauvegardée !");
+      lastConfig = newConfig;
+    }
+  }, 5000);
 }
 
-function renderCards(){
-  const wrap = $("#cards");
-  const arr = loadClasses();
-  if (!arr.length){ wrap.innerHTML = `<div class="text-gray-400 text-sm">Aucune classe enregistrée pour l’instant.</div>`; return; }
-  wrap.innerHTML = arr.map(c=>`
-    <div class="bg-slate-800 rounded p-3 border border-slate-700">
-      <div class="flex items-center justify-between mb-2">
-        <div class="font-semibold">${c.weaponName}</div>
-        <div class="text-xs text-gray-400">${new Date(c.createdAt).toLocaleString()}</div>
+// 📜 Charger les classes
+async function chargerClasses() {
+  if (!currentUser) return;
+  const snapshot = await db.collection("users").doc(currentUser.uid).collection("classes").orderBy("date", "desc").get();
+  const cards = document.getElementById("cards");
+  cards.innerHTML = "";
+
+  snapshot.forEach((doc) => {
+    const c = doc.data();
+    const div = document.createElement("div");
+    div.className = "bg-slate-700 p-3 rounded shadow-md";
+    div.innerHTML = `
+      <div class="flex justify-between items-center">
+        <div>
+          <strong>${c.arme}</strong><br>
+          <span class="text-xs text-gray-400">${new Date(c.date).toLocaleString()}</span>
+        </div>
+        <div class="flex gap-2">
+          <button class="bg-amber-500 px-2 py-1 rounded text-sm hover:bg-amber-400" data-id="${doc.id}">✏️ Modifier</button>
+          <button class="bg-red-600 px-2 py-1 rounded text-sm hover:bg-red-500" data-del="${doc.id}">🗑️</button>
+        </div>
       </div>
-      <div class="text-xs text-gray-300">Type: ${cap(c.weaponType || "—")}</div>
-      <div class="text-xs text-gray-300">Viseur: ${c.slots.sights} · Canon: ${c.slots.barrels} · Bouche: ${c.slots.muzzles}</div>
-      <div class="text-xs text-gray-300">Sous-canon: ${c.slots.underbarrels} · Chargeur: ${c.slots.magazines} · Crosse: ${c.slots.stocks}</div>
-      <div class="text-xs text-gray-300">Camo: ${c.slots.camouflages}</div>
-      <div class="text-xs text-gray-300">G1: ${c.gadget1} · G2: ${c.gadget2} · Grenade: ${c.grenade}</div>
-      <div class="mt-2 flex gap-2">
-        <button data-id="${c.id}" class="dup px-2 py-1 bg-slate-700 rounded text-xs">Dupliquer</button>
-        <button data-id="${c.id}" class="del px-2 py-1 bg-red-600 rounded text-xs">Supprimer</button>
-      </div>
-    </div>
-  `).join("");
+    `;
+    cards.appendChild(div);
+  });
 
-  wrap.querySelectorAll(".del").forEach(b=>b.addEventListener("click", e=>{
-    const id = e.target.dataset.id;
-    const arr = loadClasses().filter(x=>x.id !== id);
-    saveClasses(arr); renderCards();
-  }));
-  wrap.querySelectorAll(".dup").forEach(b=>b.addEventListener("click", e=>{
-    const id = e.target.dataset.id;
-    const arr = loadClasses();
-    const idx = arr.findIndex(x=>x.id===id);
-    if (idx>=0){ const copy = {...arr[idx], id:"c_"+Math.random().toString(36).slice(2,9), createdAt:Date.now()}; arr.unshift(copy); saveClasses(arr); renderCards(); }
-  }));
+  document.querySelectorAll("[data-id]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.target.getAttribute("data-id");
+      const docSnap = await db.collection("users").doc(currentUser.uid).collection("classes").doc(id).get();
+      if (docSnap.exists) chargerClasseDansUI(docSnap.id, docSnap.data());
+    });
+  });
+
+  document.querySelectorAll("[data-del]").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      const id = e.target.getAttribute("data-del");
+      if (confirm("Supprimer cette classe ?")) {
+        await db.collection("users").doc(currentUser.uid).collection("classes").doc(id).delete();
+        await chargerClasses();
+      }
+    });
+  });
 }
 
-/* Export / Import */
-$("#exportBtn").addEventListener("click", ()=>{
-  const blob = new Blob([JSON.stringify(loadClasses(), null, 2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "bf6_classes_export.json";
-  document.body.appendChild(a); a.click(); a.remove();
-});
+// 🎯 Charger une classe existante
+function chargerClasseDansUI(id, data) {
+  currentLoadout = { id, ...data };
+  document.getElementById("weaponType").value = data.type;
+  remplirArmes();
+  document.getElementById("weaponName").value = data.arme;
+  document.getElementById("slot-sights").value = data.accessoires.viseur;
+  document.getElementById("slot-barrels").value = data.accessoires.canon;
+  document.getElementById("slot-muzzles").value = data.accessoires.bouche;
+  document.getElementById("slot-underbarrels").value = data.accessoires.sousCanon;
+  document.getElementById("slot-magazines").value = data.accessoires.chargeur;
+  document.getElementById("slot-stocks").value = data.accessoires.crosse;
+  document.getElementById("slot-camouflages").value = data.accessoires.camouflage;
+  document.getElementById("gadget1").value = data.gadgets.g1;
+  document.getElementById("gadget2").value = data.gadgets.g2;
+  document.getElementById("grenade").value = data.gadgets.grenade;
+  afficherStats();
+}
 
-$("#importInput").addEventListener("change", (ev)=>{
-  const file = ev.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
-    try {
-      const data = JSON.parse(e.target.result);
-      if (Array.isArray(data)) saveClasses(data);
-      else saveClasses([data]);
-      renderCards();
-      alert("✅ Import réussi !");
-    } catch { alert("⚠️ Fichier JSON invalide."); }
-  };
-  reader.readAsText(file);
-  ev.target.value = "";
-});
-
-/* Partage */
-$("#shareBtn").addEventListener("click", ()=>{
-  const cls = loadClasses()[0];
-  if (!cls) return alert("Enregistre d’abord une classe.");
-  const payload = btoa(unescape(encodeURIComponent(JSON.stringify(cls))));
-  const url = new URL(window.location.href);
-  url.searchParams.set("class", payload);
-  navigator.clipboard.writeText(url.toString()).then(()=>alert("🔗 Lien copié !"));
-});
-
-(function loadShared(){
-  const p = new URLSearchParams(location.search).get("class");
-  if (!p) return;
-  try {
-    const cls = JSON.parse(decodeURIComponent(escape(atob(p))));
-    const arr = loadClasses(); arr.unshift(cls); saveClasses(arr);
-    renderCards();
-    alert("📥 Classe importée depuis le lien.");
-  } catch {}
-})();
-
-window.addEventListener("DOMContentLoaded", loadData);
+// 🔔 Notification
+function showNotif(message) {
+  const notif = document.getElementById("saveNotif");
+  notif.textContent = message;
+  notif.classList.add("show");
+  setTimeout(() => notif.classList.remove("show"), 2500);
+}
