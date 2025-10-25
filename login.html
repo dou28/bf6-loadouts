@@ -25,29 +25,32 @@
   </div>
 
   <script>
+    // ⚙️ Firebase est déjà initialisé par firebase-config.js
+    // donc on NE redéclare PAS "auth" ici
     const auth = firebase.auth();
 
-    function loginEmailPassword() {
+    // ✅ Fonctions globales
+    window.loginEmailPassword = function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       auth.signInWithEmailAndPassword(email, password)
         .then(() => window.location.href = "index.html")
-        .catch(err => alert(err.message));
+        .catch(err => alert("❌ " + err.message));
     }
 
-    function registerEmailPassword() {
+    window.registerEmailPassword = function() {
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
       auth.createUserWithEmailAndPassword(email, password)
-        .then(() => alert("✅ Compte créé, connecte-toi maintenant."))
-        .catch(err => alert(err.message));
+        .then(() => alert("✅ Compte créé ! Vous pouvez maintenant vous connecter."))
+        .catch(err => alert("❌ " + err.message));
     }
 
-    function loginGoogle() {
+    window.loginGoogle = function() {
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider)
         .then(() => window.location.href = "index.html")
-        .catch(err => alert(err.message));
+        .catch(err => alert("❌ " + err.message));
     }
   </script>
 </body>
