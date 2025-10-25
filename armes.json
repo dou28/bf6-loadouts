@@ -1,47 +1,64 @@
 {
-  "weapons": [
-    { "name": "M5A3", "category": "assault", "stats": { "damage": 26, "fireRate": 800, "range": 600 } },
-    { "name": "AK-24", "category": "assault", "stats": { "damage": 30, "fireRate": 680, "range": 550 } },
-    { "name": "SFAR-M GL", "category": "assault", "stats": { "damage": 42, "fireRate": 600, "range": 550 } },
-    { "name": "AC-42", "category": "assault", "stats": { "damage": 28, "fireRate": 1200, "range": 500 } },
+  "armes": [
+    { "nom": "M5A3", "categorie": "fusil d’assaut", "stats": { "degats": 26, "cadence": 800, "portee": 600 } },
+    { "nom": "AK-24", "categorie": "fusil d’assaut", "stats": { "degats": 30, "cadence": 680, "portee": 550 } },
+    { "nom": "SFAR-M GL", "categorie": "fusil d’assaut", "stats": { "degats": 42, "cadence": 600, "portee": 550 } },
+    { "nom": "AC-42", "categorie": "fusil d’assaut", "stats": { "degats": 28, "cadence": 1200, "portee": 500 } },
+    { "nom": "MTAR-21", "categorie": "fusil d’assaut", "stats": { "degats": 27, "cadence": 850, "portee": 520 } },
+    { "nom": "AUG A3", "categorie": "fusil d’assaut", "stats": { "degats": 29, "cadence": 720, "portee": 600 } },
+    { "nom": "F2000", "categorie": "fusil d’assaut", "stats": { "degats": 31, "cadence": 800, "portee": 590 } },
+    { "nom": "AN-94", "categorie": "fusil d’assaut", "stats": { "degats": 32, "cadence": 900, "portee": 650 } },
+    { "nom": "A-91", "categorie": "fusil d’assaut", "stats": { "degats": 28, "cadence": 880, "portee": 570 } },
+    { "nom": "QBZ-95", "categorie": "fusil d’assaut", "stats": { "degats": 27, "cadence": 780, "portee": 580 } },
 
-    { "name": "PBX-45", "category": "smg", "stats": { "damage": 25, "fireRate": 950, "range": 400 } },
-    { "name": "PP-29", "category": "smg", "stats": { "damage": 27, "fireRate": 750, "range": 420 } },
-    { "name": "MP9", "category": "smg", "stats": { "damage": 21, "fireRate": 950, "range": 350 } },
+    { "nom": "PBX-45", "categorie": "pistolet-mitrailleur", "stats": { "degats": 25, "cadence": 950, "portee": 400 } },
+    { "nom": "PP-29", "categorie": "pistolet-mitrailleur", "stats": { "degats": 27, "cadence": 750, "portee": 420 } },
+    { "nom": "MP9", "categorie": "pistolet-mitrailleur", "stats": { "degats": 21, "cadence": 950, "portee": 350 } },
+    { "nom": "K30", "categorie": "pistolet-mitrailleur", "stats": { "degats": 22, "cadence": 1100, "portee": 330 } },
+    { "nom": "Vector .45 ACP", "categorie": "pistolet-mitrailleur", "stats": { "degats": 23, "cadence": 1200, "portee": 320 } },
+    { "nom": "UMP-45", "categorie": "pistolet-mitrailleur", "stats": { "degats": 26, "cadence": 700, "portee": 400 } },
+    { "nom": "P90", "categorie": "pistolet-mitrailleur", "stats": { "degats": 24, "cadence": 900, "portee": 380 } },
+    { "nom": "MP7", "categorie": "pistolet-mitrailleur", "stats": { "degats": 23, "cadence": 950, "portee": 360 } },
 
-    { "name": "DM7", "category": "marksman", "stats": { "damage": 45, "fireRate": 320, "range": 800 } },
-    { "name": "SVK", "category": "marksman", "stats": { "damage": 55, "fireRate": 260, "range": 850 } },
-    { "name": "VCar", "category": "marksman", "stats": { "damage": 43, "fireRate": 350, "range": 780 } },
+    { "nom": "DM7", "categorie": "fusil de précision", "stats": { "degats": 45, "cadence": 320, "portee": 800 } },
+    { "nom": "SVK", "categorie": "fusil de précision", "stats": { "degats": 55, "cadence": 260, "portee": 850 } },
+    { "nom": "VCar", "categorie": "fusil de précision", "stats": { "degats": 43, "cadence": 350, "portee": 780 } },
+    { "nom": "M1 Garand", "categorie": "fusil de précision", "stats": { "degats": 48, "cadence": 400, "portee": 700 } },
+    { "nom": "SKS", "categorie": "fusil de précision", "stats": { "degats": 52, "cadence": 300, "portee": 850 } },
+    { "nom": "MK11", "categorie": "fusil de précision", "stats": { "degats": 50, "cadence": 340, "portee": 800 } },
 
-    { "name": "SWS-10", "category": "sniper", "stats": { "damage": 95, "fireRate": 45, "range": 1200 } },
-    { "name": "DXR-1", "category": "sniper", "stats": { "damage": 95, "fireRate": 40, "range": 1300 } },
-    { "name": "NTW-50", "category": "sniper", "stats": { "damage": 110, "fireRate": 30, "range": 1500 } },
+    { "nom": "SWS-10", "categorie": "sniper", "stats": { "degats": 95, "cadence": 45, "portee": 1200 } },
+    { "nom": "DXR-1", "categorie": "sniper", "stats": { "degats": 95, "cadence": 40, "portee": 1300 } },
+    { "nom": "NTW-50", "categorie": "sniper", "stats": { "degats": 110, "cadence": 30, "portee": 1500 } },
+    { "nom": "M98B", "categorie": "sniper", "stats": { "degats": 92, "cadence": 50, "portee": 1250 } },
+    { "nom": "GOL Magnum", "categorie": "sniper", "stats": { "degats": 94, "cadence": 47, "portee": 1300 } },
 
-    { "name": "MCS-880", "category": "shotgun", "stats": { "damage": 100, "fireRate": 120, "range": 120 } },
-    { "name": "12M Auto", "category": "shotgun", "stats": { "damage": 70, "fireRate": 240, "range": 150 } },
+    { "nom": "MCS-880", "categorie": "fusil à pompe", "stats": { "degats": 100, "cadence": 120, "portee": 120 } },
+    { "nom": "12M Auto", "categorie": "fusil à pompe", "stats": { "degats": 70, "cadence": 240, "portee": 150 } },
+    { "nom": "SPAS-12", "categorie": "fusil à pompe", "stats": { "degats": 90, "cadence": 200, "portee": 180 } },
+    { "nom": "DAO-12", "categorie": "fusil à pompe", "stats": { "degats": 85, "cadence": 180, "portee": 160 } },
 
-    { "name": "PKP-BP", "category": "lmg", "stats": { "damage": 30, "fireRate": 600, "range": 700 } },
-    { "name": "LCMG", "category": "lmg", "stats": { "damage": 28, "fireRate": 750, "range": 650 } },
-    { "name": "RPK-74", "category": "lmg", "stats": { "damage": 32, "fireRate": 670, "range": 680 } }
+    { "nom": "PKP-BP", "categorie": "mitrailleuse", "stats": { "degats": 30, "cadence": 600, "portee": 700 } },
+    { "nom": "LCMG", "categorie": "mitrailleuse", "stats": { "degats": 28, "cadence": 750, "portee": 650 } },
+    { "nom": "RPK-74", "categorie": "mitrailleuse", "stats": { "degats": 32, "cadence": 670, "portee": 680 } },
+    { "nom": "M240B", "categorie": "mitrailleuse", "stats": { "degats": 33, "cadence": 650, "portee": 710 } },
+    { "nom": "MG36", "categorie": "mitrailleuse", "stats": { "degats": 31, "cadence": 720, "portee": 680 } }
   ],
 
-  "attachments": {
-    "attachments": {
-      "sights": ["Reflex 1x", "Holographic", "ACOG 4x", "6x Scope", "Night Vision"],
-      "barrels": ["Standard", "Short Barrel", "Long Barrel"],
-      "muzzles": ["Silencer", "Compensator", "Muzzle Brake"],
-      "underbarrels": ["Vertical Grip", "Angled Grip", "Bipod"],
-      "magazines": ["Standard", "Extended", "Fast Reload", "High Velocity"],
-      "stocks": ["Standard Stock", "Recoil Stock", "Lightweight Stock"],
-      "camouflages": ["Standard", "Urban", "Forest", "Digital", "Desert", "Gold"]
-    }
+  "accessoires": {
+    "viseurs": ["Reflex 1x", "Holographique", "ACOG 4x", "Lunette 6x", "Vision nocturne"],
+    "canons": ["Standard", "Canon court", "Canon long"],
+    "bouches": ["Silencieux", "Compensateur", "Frein de bouche"],
+    "sous-canons": ["Poignée verticale", "Poignée inclinée", "Bipied"],
+    "chargeurs": ["Standard", "Étendu", "Recharge rapide", "Haute vélocité"],
+    "crosses": ["Standard", "Anti-recul", "Allégée"],
+    "camouflages": ["Standard", "Urbain", "Forêt", "Numérique", "Désert", "Or"]
   },
 
   "gadgets": [
-    "Spawn Beacon", "C5 Explosif", "Reco Drone", "Ammo Crate", "Medical Crate", "Repair Tool"
+    "Balise de réapparition", "C5 Explosif", "Drone de reconnaissance",
+    "Caisse de munitions", "Trousse médicale", "Outil de réparation"
   ],
 
-  "grenades": [
-    "Frag", "Smoke", "EMP", "Flash", "Incendiary"
-  ]
+  "grenades": ["Fragmentation", "Fumigène", "EMP", "Flash", "Incendiaire"]
 }
