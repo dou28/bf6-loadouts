@@ -5,52 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configurateur Battlefield 6</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="./firebase-config.js"></script>
-  <style>
-    #saveNotif {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background-color: #22c55e;
-      color: white;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-size: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      opacity: 0;
-      transform: translateY(10px);
-      transition: all 0.4s ease;
-      z-index: 50;
-    }
-    #saveNotif.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  </style>
 </head>
-
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
-  <div class="w-full max-w-3xl bg-slate-800/80 rounded-2xl shadow-xl p-6">
-    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div class="w-full max-w-4xl bg-slate-800/80 rounded-2xl shadow-xl p-6">
+    <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-blue-300">⚙️ Configurateur Battlefield 6</h1>
-        <p id="userName" class="text-sm text-gray-300"></p>
+        <p id="userEmail" class="text-sm text-gray-400"></p>
       </div>
-      <div class="flex gap-2 flex-wrap">
-        <button id="logoutBtn" class="px-3 py-2 bg-red-600 rounded hover:bg-red-500">Se déconnecter</button>
+      <div class="flex gap-2">
+        <button id="logoutBtn" class="hidden px-3 py-2 bg-red-600 rounded hover:bg-red-500">Se déconnecter</button>
         <button id="saveBtn" class="px-3 py-2 bg-blue-600 rounded hover:bg-blue-500">Enregistrer</button>
         <button id="exportBtn" class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600">Exporter</button>
         <label class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600 cursor-pointer">
           Importer <input id="importInput" type="file" accept="application/json" class="hidden">
         </label>
-        <button id="shareBtn" class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-500">Partager</button>
       </div>
     </div>
 
-    <input id="searchBar" type="text" placeholder="🔍 Rechercher une arme..." class="w-full p-2 rounded bg-slate-700 mb-4">
+    <input id="searchBar" type="text" placeholder="🔍 Rechercher une arme..."
+      class="w-full p-2 rounded bg-slate-700 mb-4">
 
     <div class="grid grid-cols-2 gap-4 mb-4">
       <div>
@@ -87,8 +61,7 @@
     <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
   </div>
 
-  <div id="saveNotif">💾 Classe sauvegardée !</div>
-
-  <script src="./script.js"></script>
+  <script type="module" src="./supabase-config.js"></script>
+  <script type="module" src="./script.js"></script>
 </body>
 </html>
