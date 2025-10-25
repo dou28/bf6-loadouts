@@ -1,10 +1,11 @@
 const auth = firebase.auth();
 const db = firebase.firestore();
+
 let currentUser = null;
 let currentLoadout = null;
 let armesData = null;
 
-// ✅ Initialisation
+// ✅ Initialisation utilisateur
 auth.onAuthStateChanged(async (user) => {
   if (!user) return (window.location.href = "login.html");
   currentUser = user;
@@ -20,15 +21,16 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
   auth.signOut().then(() => (window.location.href = "login.html"));
 });
 
-// ⚙️ Chargement des armes depuis armes.json
+// ⚙️ Chargement des armes
 async function chargerArmes() {
   try {
     const res = await fetch("./armes.json");
     armesData = await res.json();
 
-    const types = [...new Set(armesData.armes.map((a) => a.categorie))];
     const selectType = document.getElementById("weaponType");
     selectType.innerHTML = `<option value="">Tous</option>`;
+
+    const types = [...new Set(armesData.armes.map((a) => a.categorie))];
     types.forEach((t) => {
       selectType.innerHTML += `<option value="${t}">${t}</option>`;
     });
@@ -38,6 +40,7 @@ async function chargerArmes() {
     selectType.addEventListener("change", remplirArmes);
     document.getElementById("weaponName").addEventListener("change", afficherStats);
 
+    // remplir les accessoires
     remplirSelects("slot-sights", armesData.accessoires.viseurs);
     remplirSelects("slot-barrels", armesData.accessoires.canons);
     remplirSelects("slot-muzzles", armesData.accessoires.bouches);
@@ -53,28 +56,24 @@ async function chargerArmes() {
   }
 }
 
-// 🔁 Remplir les sélecteurs
+// 🔁 Remplir un select
 function remplirSelects(id, liste) {
   const s = document.getElementById(id);
   s.innerHTML = "";
-  liste.forEach((item) => {
-    s.innerHTML += `<option>${item}</option>`;
-  });
+  liste.forEach((item) => (s.innerHTML += `<option>${item}</option>`));
 }
 
-// 🔫 Remplir la liste des armes selon le type
+// 🔫 Armes selon le type
 function remplirArmes() {
   const type = document.getElementById("weaponType").value;
   const selectArme = document.getElementById("weaponName");
   selectArme.innerHTML = `<option value="">— Choisir —</option>`;
   armesData.armes
     .filter((a) => !type || a.categorie === type)
-    .forEach((a) => {
-      selectArme.innerHTML += `<option value="${a.nom}">${a.nom}</option>`;
-    });
+    .forEach((a) => (selectArme.innerHTML += `<option value="${a.nom}">${a.nom}</option>`));
 }
 
-// 📊 Afficher les statistiques d’une arme
+// 📊 Affiche les stats
 function afficherStats() {
   const armeNom = document.getElementById("weaponName").value;
   const arme = armesData.armes.find((a) => a.nom === armeNom);
@@ -93,7 +92,7 @@ function afficherStats() {
   `;
 }
 
-// 📦 Récupérer la config actuelle
+// 📦 Récupère la config actuelle
 function getCurrentLoadout() {
   return {
     arme: document.getElementById("weaponName").value,
@@ -116,32 +115,43 @@ function getCurrentLoadout() {
   };
 }
 
-// 💾 Enregistrer manuellement
+// 💾 Bouton "Enregistrer"
 document.getElementById("saveBtn").addEventListener("click", async () => {
-  if (!currentUser) return alert("Connecte-toi pour sauvegarder ta classe.");
-  const classe = getCurrentLoadout();
-  if (!classe.arme) return alert("Choisis une arme avant d’enregistrer.");
+  if (!currentUser) {
+    alert("Connecte-toi pour sauvegarder ta classe.");
+    return;
+  }
 
-  await db.collection("users").doc(currentUser.uid).collection("classes").add(classe);
-  showNotif("✅ Classe enregistrée !");
-  await chargerClasses();
+  const classe = getCurrentLoadout();
+  if (!classe.arme) {
+    alert("Choisis une arme avant d’enregistrer.");
+    return;
+  }
+
+  try {
+    await db.collection("users").doc(currentUser.uid).collection("classes").add(classe);
+    showNotif("✅ Classe enregistrée !");
+    await chargerClasses();
+  } catch (e) {
+    console.error("Erreur sauvegarde :", e);
+  }
 });
 
-// 🔁 Auto-save
+// 🔁 Auto-save toutes les 5 secondes
 function setupAutoSave() {
-  let lastConfig = JSON.stringify(getCurrentLoadout());
+  let last = JSON.stringify(getCurrentLoadout());
   setInterval(async () => {
     if (!currentUser || !currentLoadout) return;
-    const newConfig = JSON.stringify(getCurrentLoadout());
-    if (newConfig !== lastConfig) {
+    const now = JSON.stringify(getCurrentLoadout());
+    if (now !== last) {
       await db.collection("users").doc(currentUser.uid).collection("classes").doc(currentLoadout.id).update(getCurrentLoadout());
       showNotif("💾 Classe sauvegardée !");
-      lastConfig = newConfig;
+      last = now;
     }
   }, 5000);
 }
 
-// 📜 Charger les classes
+// 📜 Charger les classes utilisateur
 async function chargerClasses() {
   if (!currentUser) return;
   const snapshot = await db.collection("users").doc(currentUser.uid).collection("classes").orderBy("date", "desc").get();
@@ -167,16 +177,17 @@ async function chargerClasses() {
     cards.appendChild(div);
   });
 
-  document.querySelectorAll("[data-id]").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
+  // Événements des boutons
+  document.querySelectorAll("[data-id]").forEach((b) => {
+    b.addEventListener("click", async (e) => {
       const id = e.target.getAttribute("data-id");
       const docSnap = await db.collection("users").doc(currentUser.uid).collection("classes").doc(id).get();
       if (docSnap.exists) chargerClasseDansUI(docSnap.id, docSnap.data());
     });
   });
 
-  document.querySelectorAll("[data-del]").forEach((btn) => {
-    btn.addEventListener("click", async (e) => {
+  document.querySelectorAll("[data-del]").forEach((b) => {
+    b.addEventListener("click", async (e) => {
       const id = e.target.getAttribute("data-del");
       if (confirm("Supprimer cette classe ?")) {
         await db.collection("users").doc(currentUser.uid).collection("classes").doc(id).delete();
@@ -186,7 +197,7 @@ async function chargerClasses() {
   });
 }
 
-// 🎯 Charger une classe existante
+// 🎯 Charge une classe dans l’UI
 function chargerClasseDansUI(id, data) {
   currentLoadout = { id, ...data };
   document.getElementById("weaponType").value = data.type;
@@ -205,7 +216,7 @@ function chargerClasseDansUI(id, data) {
   afficherStats();
 }
 
-// 🔔 Notification
+// 🔔 Petite notification visuelle
 function showNotif(message) {
   const notif = document.getElementById("saveNotif");
   notif.textContent = message;
