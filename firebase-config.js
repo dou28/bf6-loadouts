@@ -13,6 +13,5 @@ const firebaseConfig = {
 // Initialisation de Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialisation des services
-const auth = firebase.auth();
-const db = firebase.firestore();
+// ✅ On ne définit PAS auth ni db ici
+// pour éviter les doublons dans login.html
