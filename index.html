@@ -9,14 +9,16 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="./firebase-config.js"></script>
+  <script src="./script.js"></script>
 </head>
 
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
   <div class="w-full max-w-3xl bg-slate-800/80 rounded-2xl shadow-xl p-6">
+    <!-- HEADER -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-bold text-blue-300">⚙️ Configurateur Battlefield 6</h1>
-        <span id="userName" class="text-gray-300"></span>
+        <span id="userName" class="text-gray-300 text-sm"></span>
       </div>
       <div class="flex gap-2">
         <button id="logoutBtn" class="px-3 py-2 bg-red-600 rounded hover:bg-red-500">Se déconnecter</button>
@@ -29,9 +31,11 @@
       </div>
     </div>
 
+    <!-- RECHERCHE -->
     <input id="searchBar" type="text" placeholder="🔍 Rechercher une arme..."
       class="w-full p-2 rounded bg-slate-700 mb-4">
 
+    <!-- SÉLECTEURS -->
     <div class="grid grid-cols-2 gap-4 mb-4">
       <div>
         <label for="weaponType" class="block text-sm mb-1 text-gray-300">Type d’arme</label>
@@ -43,6 +47,7 @@
       </div>
     </div>
 
+    <!-- ACCESSOIRES -->
     <div id="slots" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
       <div><label class="block text-sm mb-1">Viseur</label><select id="slot-sights" class="w-full bg-slate-700 p-2 rounded"></select></div>
       <div><label class="block text-sm mb-1">Canon</label><select id="slot-barrels" class="w-full bg-slate-700 p-2 rounded"></select></div>
@@ -53,44 +58,182 @@
       <div class="md:col-span-3"><label class="block text-sm mb-1">Camouflage</label><select id="slot-camouflages" class="w-full bg-slate-700 p-2 rounded"></select></div>
     </div>
 
+    <!-- GADGETS -->
     <div class="grid grid-cols-3 gap-4 mb-6">
       <div><label class="block text-sm mb-1">Gadget 1</label><select id="gadget1" class="w-full bg-slate-700 p-2 rounded"></select></div>
       <div><label class="block text-sm mb-1">Gadget 2</label><select id="gadget2" class="w-full bg-slate-700 p-2 rounded"></select></div>
       <div><label class="block text-sm mb-1">Grenade</label><select id="grenade" class="w-full bg-slate-700 p-2 rounded"></select></div>
     </div>
 
+    <!-- STATS -->
     <div id="weaponStats" class="bg-slate-700 p-4 rounded text-sm text-gray-200">
       <p>Sélectionne une arme pour afficher ses statistiques.</p>
     </div>
 
+    <!-- CLASSES SAUVEGARDÉES -->
     <h2 class="mt-8 mb-2 font-semibold text-gray-300">Mes classes</h2>
     <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
   </div>
 
-  <script src="./script.js"></script>
-
+  <!-- SCRIPT FIREBASE ET FONCTIONNALITÉS -->
   <script>
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // Vérifie la connexion utilisateur
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        document.getElementById("userName").textContent =
-          "Bienvenue, " + (user.displayName || user.email);
-      } else {
+    let currentUser = null;
+    let currentLoadout = null;
+
+    // ✅ Vérification de session
+    auth.onAuthStateChanged(async user => {
+      if (!user) {
         window.location.href = "login.html";
+        return;
+      }
+      currentUser = user;
+      document.getElementById("userName").textContent =
+        "Bienvenue, " + (user.displayName || user.email);
+      await chargerClasses();
+      setupAutoSave();
+    });
+
+    // 🚪 Déconnexion
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth.signOut().then(() => (window.location.href = "login.html"));
+    });
+
+    // 💾 Ajouter une nouvelle classe
+    document.getElementById("saveBtn").addEventListener("click", async () => {
+      if (!currentUser) return alert("Connecte-toi pour sauvegarder ta classe.");
+      const nouvelleClasse = getCurrentLoadout();
+      if (!nouvelleClasse.arme) return alert("Choisis une arme avant d’enregistrer.");
+      try {
+        await db.collection("users")
+          .doc(currentUser.uid)
+          .collection("classes")
+          .add(nouvelleClasse);
+        alert("✅ Nouvelle classe enregistrée !");
+        await chargerClasses();
+      } catch (err) {
+        alert("❌ Erreur : " + err.message);
       }
     });
 
-    // Déconnexion
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      auth.signOut()
-        .then(() => {
-          alert("✅ Déconnexion réussie !");
-          window.location.href = "login.html";
-        })
-        .catch(error => alert("❌ " + error.message));
-    });
+    // 🔍 Récupère la config actuelle
+    function getCurrentLoadout() {
+      return {
+        arme: document.getElementById("weaponName").value,
+        type: document.getElementById("weaponType").value,
+        accessoires: {
+          viseur: document.getElementById("slot-sights").value,
+          canon: document.getElementById("slot-barrels").value,
+          bouche: document.getElementById("slot-muzzles").value,
+          sousCanon: document.getElementById("slot-underbarrels").value,
+          chargeur: document.getElementById("slot-magazines").value,
+          crosse: document.getElementById("slot-stocks").value,
+          camouflage: document.getElementById("slot-camouflages").value,
+        },
+        gadgets: {
+          g1: document.getElementById("gadget1").value,
+          g2: document.getElementById("gadget2").value,
+          grenade: document.getElementById("grenade").value,
+        },
+        date: new Date().toISOString(),
+      };
+    }
+
+    // 🔁 Sauvegarde automatique toutes les 5s
+    function setupAutoSave() {
+      let lastConfig = JSON.stringify(getCurrentLoadout());
+      setInterval(async () => {
+        if (!currentUser) return;
+        const newConfig = JSON.stringify(getCurrentLoadout());
+        if (newConfig !== lastConfig && currentLoadout) {
+          try {
+            await db.collection("users")
+              .doc(currentUser.uid)
+              .collection("classes")
+              .doc(currentLoadout.id)
+              .update(getCurrentLoadout());
+            console.log("💾 Auto-sauvegarde effectuée !");
+          } catch (err) {
+            console.warn("Erreur auto-save:", err.message);
+          }
+          lastConfig = newConfig;
+        }
+      }, 5000);
+    }
+
+    // 📜 Charger les classes
+    async function chargerClasses() {
+      if (!currentUser) return;
+      const snapshot = await db.collection("users")
+        .doc(currentUser.uid)
+        .collection("classes")
+        .orderBy("date", "desc")
+        .get();
+
+      const cards = document.getElementById("cards");
+      cards.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        const div = document.createElement("div");
+        div.className = "bg-slate-700 p-3 rounded shadow-md";
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <strong>${c.arme}</strong><br>
+              <span class="text-xs text-gray-400">${new Date(c.date).toLocaleString()}</span>
+            </div>
+            <div class="flex gap-2">
+              <button class="bg-amber-500 px-2 py-1 rounded text-sm hover:bg-amber-400" data-id="${doc.id}">✏️ Modifier</button>
+              <button class="bg-red-600 px-2 py-1 rounded text-sm hover:bg-red-500" data-del="${doc.id}">🗑️</button>
+            </div>
+          </div>
+        `;
+        cards.appendChild(div);
+      });
+
+      document.querySelectorAll("[data-id]").forEach(btn => {
+        btn.addEventListener("click", async e => {
+          const id = e.target.getAttribute("data-id");
+          const docSnap = await db.collection("users")
+            .doc(currentUser.uid)
+            .collection("classes")
+            .doc(id)
+            .get();
+          if (docSnap.exists) chargerClasseDansUI(docSnap.id, docSnap.data());
+        });
+      });
+
+      document.querySelectorAll("[data-del]").forEach(btn => {
+        btn.addEventListener("click", async e => {
+          const id = e.target.getAttribute("data-del");
+          if (confirm("Supprimer cette classe ?")) {
+            await db.collection("users").doc(currentUser.uid).collection("classes").doc(id).delete();
+            await chargerClasses();
+          }
+        });
+      });
+    }
+
+    // 🎯 Charger une classe sélectionnée
+    function chargerClasseDansUI(id, data) {
+      currentLoadout = { id, ...data };
+      document.getElementById("weaponType").value = data.type;
+      document.getElementById("weaponName").value = data.arme;
+      document.getElementById("slot-sights").value = data.accessoires.viseur;
+      document.getElementById("slot-barrels").value = data.accessoires.canon;
+      document.getElementById("slot-muzzles").value = data.accessoires.bouche;
+      document.getElementById("slot-underbarrels").value = data.accessoires.sousCanon;
+      document.getElementById("slot-magazines").value = data.accessoires.chargeur;
+      document.getElementById("slot-stocks").value = data.accessoires.crosse;
+      document.getElementById("slot-camouflages").value = data.accessoires.camouflage;
+      document.getElementById("gadget1").value = data.gadgets.g1;
+      document.getElementById("gadget2").value = data.gadgets.g2;
+      document.getElementById("grenade").value = data.gadgets.grenade;
+      console.log("🧰 Classe chargée :", data.arme);
+    }
   </script>
 </body>
 </html>
