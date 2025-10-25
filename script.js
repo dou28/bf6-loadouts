@@ -1,3 +1,9 @@
+// script.js (version corrigée & robuste)
+// --------------------------------------------------
+// Dépendances : supabase-config.js (exporte `supabase`)
+// index.html doit charger ce script avec type="module"
+// --------------------------------------------------
+
 import { supabase } from "./supabase-config.js";
 
 /* ----------------------------- DOM ----------------------------- */
@@ -35,12 +41,13 @@ let armesData = null;
 
 /* ----------------------------- Utils ---------------------------- */
 const notif = (msg)=> {
+  if (!notifBox) return;
   notifBox.textContent = msg;
   notifBox.classList.add("show");
-  setTimeout(()=>notifBox.classList.remove("show"), 2500);
+  setTimeout(()=>notifBox.classList.remove("show"), 2200);
 };
 
-/* ---------- Modal générique ---------- */
+/* ---------- Modal générique (retourne valeur ou null) ---------- */
 function openModal(title, placeholder="", extra="", confirmText="OK") {
   return new Promise(resolve => {
     const bg = document.getElementById("modalBg");
@@ -49,6 +56,13 @@ function openModal(title, placeholder="", extra="", confirmText="OK") {
     const e = document.getElementById("modalExtra");
     const c = document.getElementById("modalCancel");
     const ok = document.getElementById("modalConfirm");
+
+    if (!bg || !t || !i || !c || !ok) {
+      // si modal absent → fallback simple
+      const val = prompt(title, placeholder || "");
+      resolve(val);
+      return;
+    }
 
     t.textContent = title;
     i.value = "";
@@ -60,19 +74,22 @@ function openModal(title, placeholder="", extra="", confirmText="OK") {
     bg.classList.add("show");
     i.focus();
 
-    const close = val => {
+    const cleanup = () => {
       bg.classList.remove("show");
-      resolve(val);
+      c.onclick = null;
+      ok.onclick = null;
+      i.onkeydown = null;
     };
-    c.onclick = () => close(null);
-    ok.onclick = () => close(i.value || null);
-    i.onkeydown = ev => { if (ev.key === "Enter") close(i.value || null); };
+
+    c.onclick = () => { cleanup(); resolve(null); };
+    ok.onclick = () => { const v = i.value || null; cleanup(); resolve(v); };
+    i.onkeydown = ev => { if (ev.key === "Enter") { const v = i.value || null; cleanup(); resolve(v); } };
   });
 }
 
 /* ----------------------------- Données -------------------------- */
 const getPayload = (nameOverride=null) => {
-  const name = nameOverride ?? selArme.value || "Classe sans nom";
+  const name = nameOverride ?? (selArme.value ? `${selArme.value}` : "Classe sans nom");
   return {
     user_id: session.user.id,
     name,
@@ -88,8 +105,14 @@ const getPayload = (nameOverride=null) => {
 };
 
 function fillSelect(select, list = []) {
+  if (!select) return;
   select.innerHTML = "";
-  list.forEach(v => select.innerHTML += `<option>${v}</option>`);
+  list.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    select.appendChild(opt);
+  });
 }
 
 function afficherStats() {
@@ -102,68 +125,116 @@ function afficherStats() {
   statsDiv.innerHTML = `
     <div class="flex justify-between">
       <div><strong>${arme.nom}</strong> — ${arme.categorie}</div>
-      <div class="text-sm text-gray-300">${arme.stats.degats} dmg · ${arme.stats.cadence} RPM · ${arme.stats.portee} m</div>
+      <div class="text-sm text-gray-300">${(arme.stats?.degats ?? "-")} dmg · ${(arme.stats?.cadence ?? "-")} RPM · ${(arme.stats?.portee ?? "-")} m</div>
     </div>`;
 }
 
 /* --------------------------- Auth / Session ---------------------- */
-const { data:sessionData } = await supabase.auth.getSession();
-session = sessionData?.session || null;
-supabase.auth.onAuthStateChange((_e, s)=>{ session = s; if(!s?.user) location.href="login.html"; });
-
-if (!session?.user) {
-  location.href = "login.html";
-} else {
-  userEmailEl.textContent = `Bienvenue, ${session.user.email}`;
+async function ensureSession() {
+  try {
+    const { data:sessionData } = await supabase.auth.getSession();
+    session = sessionData?.session || null;
+    supabase.auth.onAuthStateChange((_e, s)=>{ session = s; if(!s?.user) location.href="login.html"; });
+    if (!session?.user) {
+      location.href = "login.html";
+      return false;
+    } else {
+      userEmailEl.textContent = `Bienvenue, ${session.user.email}`;
+      return true;
+    }
+  } catch (err) {
+    console.error("Erreur session auth:", err);
+    return false;
+  }
 }
 
 /* ---------------------------- Armes.json ------------------------- */
+/**
+ * Essaie automatiquement plusieurs chemins possibles pour le fichier armes.
+ * Retourne true si chargé correctement, false sinon.
+ */
 async function chargerArmes() {
-  // ✅ chemin corrigé
-  const res = await fetch("./data/armes.json");
-  if (!res.ok) {
-    alert("⚠️ Impossible de charger les armes. Vérifie le chemin du fichier data/armes.json !");
-    return;
+  const candidates = [
+    "./data/armes.json",
+    "./armes.json",
+    "./data/weapons.json",
+    "./weapons.json"
+  ];
+
+  let res = null, lastErr = null;
+  for (const path of candidates) {
+    try {
+      res = await fetch(path);
+    } catch (err) {
+      lastErr = err;
+      res = null;
+    }
+    if (res && res.ok) {
+      try {
+        armesData = await res.json();
+      } catch (err) {
+        console.error("Erreur JSON parsing pour", path, err);
+        lastErr = err;
+        armesData = null;
+      }
+      break;
+    }
   }
 
-  armesData = await res.json();
+  if (!armesData) {
+    console.error("Impossible de charger armes.json — erreur précédente:", lastErr);
+    alert("⚠️ Impossible de charger les armes. Vérifie que le fichier armes.json (ou data/armes.json) existe et est valide.");
+    return false;
+  }
 
+  // Remplir selects
   selType.innerHTML = `<option value="">Tous</option>`;
-  const types = [...new Set(armesData.armes.map(a => a.categorie))];
+  const types = [...new Set((armesData.armes || []).map(a => a.categorie || "Autre"))];
   types.forEach(t => selType.innerHTML += `<option value="${t}">${t}</option>`);
 
-  fillSelect(sSights,  armesData.accessoires.viseurs);
-  fillSelect(sBarrels, armesData.accessoires.canons);
-  fillSelect(sMuzzles, armesData.accessoires.bouches);
-  fillSelect(sUnder,   armesData.accessoires["sous-canons"] ?? []);
-  fillSelect(sMags,    armesData.accessoires.chargeurs);
-  fillSelect(sStocks,  armesData.accessoires.crosses);
-  fillSelect(sCamos,   armesData.accessoires.camouflages);
-  fillSelect(g1,       armesData.gadgets);
-  fillSelect(g2,       armesData.gadgets);
-  fillSelect(nade,     armesData.grenades);
+  fillSelect(sSights,  armesData.accessoires?.viseurs || []);
+  fillSelect(sBarrels, armesData.accessoires?.canons || []);
+  fillSelect(sMuzzles, armesData.accessoires?.bouches || []);
+  fillSelect(sUnder,   armesData.accessoires?.["sous-canons"] || armesData.accessoires?.souscanon || []);
+  fillSelect(sMags,    armesData.accessoires?.chargeurs || []);
+  fillSelect(sStocks,  armesData.accessoires?.crosses || armesData.accessoires?.crosses || []);
+  fillSelect(sCamos,   armesData.accessoires?.camouflages || []);
+  fillSelect(g1,       armesData.gadgets || []);
+  fillSelect(g2,       armesData.gadgets || []);
+  fillSelect(nade,     armesData.grenades || []);
 
   // Armes list
   const remplirArmes = () => {
     const type = selType.value;
     selArme.innerHTML = `<option value="">— Choisir —</option>`;
-    armesData.armes.filter(a => !type || a.categorie === type)
-      .forEach(a => selArme.innerHTML += `<option value="${a.nom}">${a.nom}</option>`);
+    (armesData.armes || []).filter(a => !type || (a.categorie === type)).forEach(a => {
+      const o = document.createElement("option");
+      o.value = a.nom;
+      o.textContent = a.nom;
+      selArme.appendChild(o);
+    });
   };
+
   selType.addEventListener("change", remplirArmes);
   selArme.addEventListener("change", afficherStats);
   remplirArmes();
+
+  return true;
 }
 
 /* ------------------------------ CRUD ---------------------------- */
 async function loadClasses() {
+  if (!session?.user) return;
   const { data, error } = await supabase
     .from("classes")
     .select("*")
     .eq("user_id", session.user.id)
     .order("created_at", { ascending:false });
 
-  if (error) { console.error(error); return; }
+  if (error) {
+    console.error("Erreur loadClasses:", error);
+    return;
+  }
 
   cardsDiv.innerHTML = "";
   data.forEach(cls => {
@@ -184,8 +255,9 @@ async function loadClasses() {
     cardsDiv.appendChild(card);
   });
 
+  // Attacher handlers (edit / rename / delete)
   document.querySelectorAll("[data-edit]").forEach(btn => {
-    btn.addEventListener("click", async e => {
+    btn.onclick = async (e) => {
       const id = e.currentTarget.getAttribute("data-edit");
       const { data, error } = await supabase.from("classes").select("*").eq("id", id).single();
       if (error) return alert("❌ " + error.message);
@@ -201,37 +273,37 @@ async function loadClasses() {
       const g = data.gadgets || {};
       g1.value = g.gadget1 || ""; g2.value = g.gadget2 || ""; nade.value = g.grenade || "";
       notif("🔄 Classe chargée.");
-    });
+    };
   });
 
-  document.querySelectorAll("[data-rename]").forEach(btn=>{
-    btn.addEventListener("click", async e=>{
+  document.querySelectorAll("[data-rename]").forEach(btn => {
+    btn.onclick = async (e) => {
       const id = e.currentTarget.getAttribute("data-rename");
       const newName = await openModal("Renommer la classe", "Nouveau nom...");
       if (!newName) return;
       const { error } = await supabase.from("classes").update({ name:newName }).eq("id", id);
       if (error) return alert("❌ " + error.message);
       await loadClasses();
-    });
+    };
   });
 
   document.querySelectorAll("[data-del]").forEach(btn => {
-    btn.addEventListener("click", async e => {
+    btn.onclick = async (e) => {
       const id = e.currentTarget.getAttribute("data-del");
-      const confirmDel = await openModal("Confirmer la suppression", "tapez SUPPRIMER pour confirmer");
-      if (confirmDel?.toUpperCase() !== "SUPPRIMER") return;
+      const confirmDel = await openModal("Confirmer la suppression", "Tape SUPPRIMER pour confirmer");
+      if (!confirmDel) return;
+      if (confirmDel.toUpperCase() !== "SUPPRIMER") return;
       const { error } = await supabase.from("classes").delete().eq("id", id);
       if (error) return alert("❌ " + error.message);
       await loadClasses();
-    });
+    };
   });
 }
 
 /* ------------------------ Boutons principaux -------------------- */
-
 logoutBtn.addEventListener("click", async ()=>{
   const { error } = await supabase.auth.signOut();
-  if (error) return alert("❌ " + error.message);
+  if (error) { alert("❌ " + error.message); return; }
   location.href = "login.html";
 });
 
@@ -252,7 +324,7 @@ exportBtn.addEventListener("click", ()=>{
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `${data.name.replace(/\s+/g,'_')}.json`;
+  a.download = `${(data.name || "classe").replace(/\s+/g,'_')}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
 });
@@ -272,7 +344,10 @@ importIn.addEventListener("change", async (e)=>{
     const g = obj.gadgets || {};
     g1.value = g.gadget1 || ""; g2.value = g.gadget2 || ""; nade.value = g.grenade || "";
     notif("📥 Classe importée !");
-  } catch { alert("❌ Fichier invalide."); }
+  } catch (err) {
+    console.error("Import error:", err);
+    alert("❌ Fichier invalide.");
+  }
   importIn.value = "";
 });
 
@@ -281,17 +356,18 @@ shareBtn.addEventListener("click", async ()=>{
   const payload = getPayload();
   const pub = { ...payload, owner_id: session.user.id };
   const { data, error } = await supabase.from("public_classes").insert([pub]).select("id").single();
-  if (error) return alert("❌ " + error.message);
+  if (error) { console.error("share error:", error); return alert("❌ " + error.message); }
 
   const shareUrl = `${location.origin}${location.pathname}?shared=${data.id}`;
-  navigator.clipboard.writeText(shareUrl).catch(()=>{});
+  try { await navigator.clipboard.writeText(shareUrl); } catch {}
   await openModal("Lien de partage", "", shareUrl, "Fermer");
 });
 
 /* ---------------------- Chargement partagé ---------------------- */
-const params = new URLSearchParams(location.search);
-const sharedId = params.get("shared");
-if (sharedId) {
+async function handleShared() {
+  const params = new URLSearchParams(location.search);
+  const sharedId = params.get("shared");
+  if (!sharedId) return;
   banner.classList.remove("hidden");
   try {
     const { data, error } = await supabase.from("public_classes").select("*").eq("id", sharedId).single();
@@ -306,10 +382,23 @@ if (sharedId) {
       const g = data.gadgets || {};
       g1.value = g.gadget1 || ""; g2.value = g.gadget2 || ""; nade.value = g.grenade || "";
       notif("🔎 Classe publique chargée");
+    } else {
+      console.warn("shared load error:", error);
     }
-  } catch(e) { console.warn(e); }
+  } catch (e) {
+    console.warn("handleShared error:", e);
+  }
 }
 
 /* --------------------------- Boot ------------------------------- */
-await chargerArmes();
-await loadClasses();
+(async function boot(){
+  const ok = await ensureSession();
+  if (!ok) return;
+  const loaded = await chargerArmes();
+  if (!loaded) {
+    // on arrête le boot pour éviter autres erreurs
+    return;
+  }
+  await handleShared();
+  await loadClasses();
+})();
