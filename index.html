@@ -5,16 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configurateur Battlefield 6</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    #saveNotif{
+      position:fixed;bottom:20px;right:20px;background:#22c55e;color:#fff;
+      padding:10px 14px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.3);
+      opacity:0;transform:translateY(8px);transition:all .25s ease;z-index:40
+    }
+    #saveNotif.show{opacity:1;transform:translateY(0)}
+  </style>
 </head>
+
 <body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
   <div class="w-full max-w-4xl bg-slate-800/80 rounded-2xl shadow-xl p-6">
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
       <div>
         <h1 class="text-2xl font-bold text-blue-300">⚙️ Configurateur Battlefield 6</h1>
         <p id="userEmail" class="text-sm text-gray-400"></p>
       </div>
       <div class="flex gap-2">
-        <button id="logoutBtn" class="hidden px-3 py-2 bg-red-600 rounded hover:bg-red-500">Se déconnecter</button>
+        <button id="logoutBtn" class="px-3 py-2 bg-red-600 rounded hover:bg-red-500">Se déconnecter</button>
         <button id="saveBtn" class="px-3 py-2 bg-blue-600 rounded hover:bg-blue-500">Enregistrer</button>
         <button id="exportBtn" class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600">Exporter</button>
         <label class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600 cursor-pointer">
@@ -28,16 +37,16 @@
 
     <div class="grid grid-cols-2 gap-4 mb-4">
       <div>
-        <label for="weaponType" class="block text-sm mb-1 text-gray-300">Type d’arme</label>
+        <label class="block text-sm mb-1 text-gray-300">Type d’arme</label>
         <select id="weaponType" class="w-full bg-slate-700 p-2 rounded"></select>
       </div>
       <div>
-        <label for="weaponName" class="block text-sm mb-1 text-gray-300">Arme</label>
+        <label class="block text-sm mb-1 text-gray-300">Arme</label>
         <select id="weaponName" class="w-full bg-slate-700 p-2 rounded"></select>
       </div>
     </div>
 
-    <div id="slots" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
       <div><label class="block text-sm mb-1">Viseur</label><select id="slot-sights" class="w-full bg-slate-700 p-2 rounded"></select></div>
       <div><label class="block text-sm mb-1">Canon</label><select id="slot-barrels" class="w-full bg-slate-700 p-2 rounded"></select></div>
       <div><label class="block text-sm mb-1">Bouche</label><select id="slot-muzzles" class="w-full bg-slate-700 p-2 rounded"></select></div>
@@ -61,6 +70,9 @@
     <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
   </div>
 
+  <div id="saveNotif">💾 Classe sauvegardée !</div>
+
+  <!-- IMPORTANT: modules -->
   <script type="module" src="./supabase-config.js"></script>
   <script type="module" src="./script.js"></script>
 </body>
