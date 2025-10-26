@@ -1,26 +1,24 @@
-// === CONFIGURATEUR BF6 - VERSION DYNAMIQUE ===
-
 let armesData = [];
 let classesSauvegardees = [];
 
-// --- Chargement du fichier JSON ---
+// --- Charger le JSON ---
 async function chargerArmes() {
   try {
-    console.log("🔄 Chargement du fichier armes.json...");
+    console.log("Chargement du fichier armes.json...");
     const res = await fetch("./data/armes.json");
     if (!res.ok) throw new Error("Fichier JSON introuvable !");
     const data = await res.json();
 
     armesData = data.armes;
-    console.log("✅ Armes chargées :", armesData.length);
+    console.log(`✅ ${armesData.length} armes chargées.`);
     remplirTypesArmes();
   } catch (err) {
-    console.error("❌ Erreur de chargement :", err);
-    alert("Impossible de charger les armes. Vérifie le chemin : ./data/armes.json");
+    console.error("Erreur :", err);
+    alert("Impossible de charger le fichier armes.json !");
   }
 }
 
-// --- Remplir les types d’armes ---
+// --- Type d’armes ---
 function remplirTypesArmes() {
   const typeSelect = document.getElementById("weaponType");
   const armeSelect = document.getElementById("weaponName");
@@ -35,16 +33,15 @@ function remplirTypesArmes() {
   });
 
   typeSelect.addEventListener("change", () => {
-    const type = typeSelect.value;
-    const armes = armesData.filter(a => a.categorie === type);
+    const armes = armesData.filter(a => a.categorie === typeSelect.value);
     remplirArmes(armes);
   });
 }
 
-// --- Liste d’armes selon le type ---
+// --- Liste d’armes ---
 function remplirArmes(armes) {
   const armeSelect = document.getElementById("weaponName");
-  armeSelect.innerHTML = "";
+  armeSelect.innerHTML = `<option value="">-- Choisir une arme --</option>`;
 
   armes.forEach(a => {
     const opt = document.createElement("option");
@@ -54,10 +51,10 @@ function remplirArmes(armes) {
   });
 
   armeSelect.addEventListener("change", () => afficherArme(armeSelect.value));
-  if (armes.length > 0) afficherArme(armes[0].nom);
+  if (armes.length === 1) afficherArme(armes[0].nom);
 }
 
-// --- Affiche les infos d’une arme ---
+// --- Affiche stats + accessoires d’une arme ---
 function afficherArme(nom) {
   const arme = armesData.find(a => a.nom === nom);
   if (!arme) return;
@@ -65,10 +62,10 @@ function afficherArme(nom) {
   afficherAccessoires(arme);
 }
 
-// --- Afficher les statistiques ---
+// --- Affichage des stats ---
 function afficherStats(arme) {
   const statsDiv = document.getElementById("weaponStats");
-  if (!arme.stats) return;
+  if (!arme.stats) return (statsDiv.innerHTML = "");
 
   statsDiv.innerHTML = `
     <h3 class="text-lg font-semibold mb-2 text-blue-400">${arme.nom}</h3>
@@ -79,17 +76,19 @@ function afficherStats(arme) {
   `;
 }
 
-// --- Créer dynamiquement tous les accessoires ---
+// --- Création dynamique des catégories ---
 function afficherAccessoires(arme) {
   const container = document.getElementById("slots");
   container.innerHTML = "";
 
   if (!arme.accessoires) {
-    console.warn("⚠️ Aucun accessoire trouvé pour", arme.nom);
+    container.innerHTML = "<p class='text-gray-400'>Aucun accessoire disponible pour cette arme.</p>";
     return;
   }
 
   Object.entries(arme.accessoires).forEach(([categorie, liste]) => {
+    if (!Array.isArray(liste) || liste.length === 0) return;
+
     const div = document.createElement("div");
     div.className = "mb-3";
 
