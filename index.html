@@ -4,114 +4,220 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Configurateur Battlefield 6</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    #saveNotif {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #22c55e;
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, .3);
-      opacity: 0;
-      transform: translateY(8px);
-      transition: all .25s ease;
-      z-index: 40;
-    }
-    #saveNotif.show { opacity: 1; transform: translateY(0); }
-    .modal-bg {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,.6);
-      display: none; align-items: center; justify-content: center;
-      z-index: 50;
-    }
-    .modal-bg.show { display: flex; }
-  </style>
+  <script defer src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center p-6">
+  <div class="w-full max-w-4xl bg-slate-800 p-6 rounded-2xl shadow-lg">
+    <h1 class="text-2xl font-bold mb-6 text-blue-400 flex items-center gap-2">
+      ⚙️ Configurateur Battlefield 6
+    </h1>
 
-<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center">
-  <div class="w-full max-w-4xl bg-slate-800/80 rounded-2xl shadow-xl p-6">
-    <div id="banner" class="hidden bg-amber-600/15 text-amber-200 text-sm rounded-t-2xl p-2 mb-2">
-      Classe partagée chargée (lecture seule). Clique sur <b>Enregistrer</b> pour l’ajouter à tes classes.
+    <!-- Barre de boutons -->
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button id="saveBtn" class="bg-blue-600 px-4 py-2 rounded">Enregistrer</button>
+      <button id="exportBtn" class="bg-gray-600 px-4 py-2 rounded">Exporter</button>
+      <button id="importBtn" class="bg-gray-600 px-4 py-2 rounded">Importer</button>
+      <button id="shareBtn" class="bg-green-600 px-4 py-2 rounded">Partager</button>
+      <button id="logoutBtn" class="bg-red-600 px-4 py-2 rounded">Se déconnecter</button>
     </div>
 
-    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
-      <div>
-        <h1 class="text-2xl font-bold text-blue-300">⚙️ Configurateur Battlefield 6</h1>
-        <p id="userEmail" class="text-sm text-gray-400"></p>
-      </div>
-      <div class="flex gap-2">
-        <button id="logoutBtn" class="px-3 py-2 bg-red-600 rounded hover:bg-red-500">Se déconnecter</button>
-        <button id="saveBtn" class="px-3 py-2 bg-blue-600 rounded hover:bg-blue-500">Enregistrer</button>
-        <button id="exportBtn" class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600">Exporter</button>
-        <label class="px-3 py-2 bg-slate-700 rounded hover:bg-slate-600 cursor-pointer">
-          Importer <input id="importInput" type="file" accept="application/json" class="hidden">
-        </label>
-        <button id="shareBtn" class="px-3 py-2 bg-emerald-600 rounded hover:bg-emerald-500">Partager</button>
-      </div>
-    </div>
-
-    <input id="searchBar" type="text" placeholder="🔍 Rechercher une arme..."
-      class="w-full p-2 rounded bg-slate-700 mb-4">
-
-    <div class="grid grid-cols-2 gap-4 mb-4">
-      <div>
+    <!-- Sélecteurs principaux -->
+    <div class="flex flex-wrap gap-4">
+      <div class="flex-1">
         <label class="block text-sm mb-1 text-gray-300">Type d’arme</label>
         <select id="weaponType" class="w-full bg-slate-700 p-2 rounded"></select>
       </div>
-      <div>
+
+      <div class="flex-1">
         <label class="block text-sm mb-1 text-gray-300">Arme</label>
         <select id="weaponName" class="w-full bg-slate-700 p-2 rounded"></select>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-      <div><label class="block text-sm mb-1">Viseur</label><select id="slot-sights" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div><label class="block text-sm mb-1">Canon</label><select id="slot-barrels" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div><label class="block text-sm mb-1">Bouche</label><select id="slot-muzzles" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div><label class="block text-sm mb-1">Sous-canon</label><select id="slot-underbarrels" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div><label class="block text-sm mb-1">Chargeur</label><select id="slot-magazines" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div><label class="block text-sm mb-1">Crosse</label><select id="slot-stocks" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div class="md:col-span-3"><label class="block text-sm mb-1">Camouflage</label><select id="slot-camouflages" class="w-full bg-slate-700 p-2 rounded"></select></div>
-    </div>
+    <!-- Accessoires dynamiques -->
+    <div id="slots" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
 
-    <div class="grid grid-cols-3 gap-4 mb-6">
-      <div><label class="block text-sm mb-1">Gadget 1</label><select id="gadget1" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div><label class="block text-sm mb-1">Gadget 2</label><select id="gadget2" class="w-full bg-slate-700 p-2 rounded"></select></div>
-      <div><label class="block text-sm mb-1">Grenade</label><select id="grenade" class="w-full bg-slate-700 p-2 rounded"></select></div>
-    </div>
+    <!-- Statistiques -->
+    <div id="weaponStats" class="bg-slate-700 p-4 rounded mt-6 text-gray-200"></div>
 
-    <div id="weaponStats" class="bg-slate-700 p-4 rounded text-sm text-gray-200 mb-3">
-      <p>Sélectionne une arme pour afficher ses statistiques.</p>
-    </div>
-
-    <!-- 🆕 Aperçu visuel de l’arme -->
-    <div id="weaponPreview" class="mt-4 flex justify-center">
-      <img id="weaponImage" src="" alt="Aperçu de l'arme" class="max-h-64 rounded-lg hidden border border-slate-700 shadow-lg" />
-    </div>
-
-    <h2 class="mt-8 mb-2 font-semibold text-gray-300">Mes classes</h2>
-    <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    <!-- Classes sauvegardées -->
+    <h2 class="text-xl font-semibold mt-8 mb-3 text-blue-300">Mes classes</h2>
+    <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
   </div>
 
-  <div id="saveNotif">💾 Classe sauvegardée !</div>
+  <!-- === Script principal === -->
+  <script>
+    let armesData = [];
+    let classesSauvegardees = [];
 
-  <!-- Modal générique -->
-  <div id="modalBg" class="modal-bg">
-    <div class="bg-slate-800 rounded-xl shadow-lg p-6 w-96">
-      <h3 id="modalTitle" class="text-lg font-semibold mb-3"></h3>
-      <input id="modalInput" type="text" class="w-full p-2 rounded bg-slate-700 mb-4" placeholder="">
-      <div id="modalExtra" class="text-sm text-gray-400 mb-3 hidden"></div>
-      <div class="flex justify-end gap-2">
-        <button id="modalCancel" class="px-3 py-2 bg-slate-600 rounded hover:bg-slate-500">Annuler</button>
-        <button id="modalConfirm" class="px-3 py-2 bg-blue-600 rounded hover:bg-blue-500">OK</button>
-      </div>
-    </div>
-  </div>
+    // --- Charger le JSON ---
+    async function chargerArmes() {
+      try {
+        console.log("Chargement du fichier armes.json...");
+        const res = await fetch("./data/armes.json");
+        if (!res.ok) throw new Error("Fichier JSON introuvable !");
+        const data = await res.json();
 
-  <script type="module" src="./supabase-config.js"></script>
-  <script type="module" src="./script.js"></script>
+        armesData = data.armes;
+        console.log(`✅ ${armesData.length} armes chargées.`);
+        remplirTypesArmes();
+      } catch (err) {
+        console.error("Erreur :", err);
+        alert("Impossible de charger le fichier armes.json !");
+      }
+    }
+
+    // --- Type d’armes ---
+    function remplirTypesArmes() {
+      const typeSelect = document.getElementById("weaponType");
+      const armeSelect = document.getElementById("weaponName");
+      const types = [...new Set(armesData.map(a => a.categorie))];
+
+      typeSelect.innerHTML = `<option value="">-- Choisir un type --</option>`;
+      types.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        typeSelect.appendChild(opt);
+      });
+
+      typeSelect.addEventListener("change", () => {
+        const armes = armesData.filter(a => a.categorie === typeSelect.value);
+        remplirArmes(armes);
+      });
+    }
+
+    // --- Liste d’armes ---
+    function remplirArmes(armes) {
+      const armeSelect = document.getElementById("weaponName");
+      armeSelect.innerHTML = `<option value="">-- Choisir une arme --</option>`;
+
+      armes.forEach(a => {
+        const opt = document.createElement("option");
+        opt.value = a.nom;
+        opt.textContent = a.nom;
+        armeSelect.appendChild(opt);
+      });
+
+      armeSelect.addEventListener("change", () => afficherArme(armeSelect.value));
+    }
+
+    // --- Affiche stats + accessoires d’une arme ---
+    function afficherArme(nom) {
+      const arme = armesData.find(a => a.nom === nom);
+      if (!arme) return;
+      afficherStats(arme);
+      afficherAccessoires(arme);
+    }
+
+    // --- Affichage des stats ---
+    function afficherStats(arme) {
+      const statsDiv = document.getElementById("weaponStats");
+      if (!arme.stats) return (statsDiv.innerHTML = "");
+
+      statsDiv.innerHTML = `
+        <h3 class="text-lg font-semibold mb-2 text-blue-400">${arme.nom}</h3>
+        <p><strong>Dégâts :</strong> ${arme.stats.degats ?? "—"}</p>
+        <p><strong>Précision :</strong> ${arme.stats.precision ?? "—"}</p>
+        <p><strong>Contrôle :</strong> ${arme.stats.controle ?? "—"}</p>
+        <p><strong>Mobilité :</strong> ${arme.stats.mobilite ?? "—"}</p>
+      `;
+    }
+
+    // --- Création dynamique des catégories ---
+    function afficherAccessoires(arme) {
+      const container = document.getElementById("slots");
+      container.innerHTML = "";
+
+      if (!arme.accessoires) {
+        container.innerHTML = "<p class='text-gray-400'>Aucun accessoire disponible pour cette arme.</p>";
+        return;
+      }
+
+      Object.entries(arme.accessoires).forEach(([categorie, liste]) => {
+        if (!Array.isArray(liste) || liste.length === 0) return;
+
+        const div = document.createElement("div");
+        div.className = "mb-3";
+
+        const label = document.createElement("label");
+        label.textContent = categorie.charAt(0).toUpperCase() + categorie.slice(1);
+        label.className = "block text-sm mb-1 text-gray-300";
+
+        const select = document.createElement("select");
+        select.className = "w-full bg-slate-700 p-2 rounded";
+        select.id = `slot-${categorie}`;
+
+        liste.forEach(opt => {
+          const option = document.createElement("option");
+          option.value = opt;
+          option.textContent = opt;
+          select.appendChild(option);
+        });
+
+        div.appendChild(label);
+        div.appendChild(select);
+        container.appendChild(div);
+      });
+    }
+
+    // --- Sauvegarde locale ---
+    document.getElementById("saveBtn").addEventListener("click", () => {
+      const armeNom = document.getElementById("weaponName").value;
+      const arme = armesData.find(a => a.nom === armeNom);
+      if (!arme) return alert("Aucune arme sélectionnée !");
+
+      const config = { arme: arme.nom, accessoires: {} };
+
+      Object.keys(arme.accessoires).forEach(cat => {
+        const select = document.getElementById(`slot-${cat}`);
+        if (select) config.accessoires[cat] = select.value;
+      });
+
+      classesSauvegardees.push(config);
+      localStorage.setItem("classesBF6", JSON.stringify(classesSauvegardees));
+      afficherClasses();
+      alert("✅ Classe enregistrée !");
+    });
+
+    // --- Afficher les classes sauvegardées ---
+    function afficherClasses() {
+      const cards = document.getElementById("cards");
+      cards.innerHTML = "";
+
+      classesSauvegardees.forEach((classe, index) => {
+        const div = document.createElement("div");
+        div.className = "bg-slate-700 p-3 rounded-lg shadow-md";
+
+        let accessoiresHTML = "";
+        for (const [cat, val] of Object.entries(classe.accessoires)) {
+          accessoiresHTML += `<p><strong>${cat} :</strong> ${val}</p>`;
+        }
+
+        div.innerHTML = `
+          <h4 class="font-semibold text-blue-300 mb-2">${classe.arme}</h4>
+          ${accessoiresHTML}
+          <button class="mt-2 bg-red-600 px-2 py-1 rounded" onclick="supprimerClasse(${index})">Supprimer</button>
+        `;
+        cards.appendChild(div);
+      });
+    }
+
+    function supprimerClasse(index) {
+      classesSauvegardees.splice(index, 1);
+      localStorage.setItem("classesBF6", JSON.stringify(classesSauvegardees));
+      afficherClasses();
+    }
+
+    // --- Initialisation ---
+    window.addEventListener("load", () => {
+      const saved = localStorage.getItem("classesBF6");
+      if (saved) {
+        classesSauvegardees = JSON.parse(saved);
+        afficherClasses();
+      }
+      chargerArmes();
+    });
+  </script>
 </body>
 </html>
