@@ -1,28 +1,39 @@
-// --- Chargement du fichier JSON des armes ---
+// --- Variables globales ---
 let armesData = [];
 let classesSauvegardees = [];
 
-// Chargement du fichier JSON
-fetch("./data/armes.json")
-  .then(res => res.json())
-  .then(data => {
-    armesData = data.armes;
-    remplirTypesArmes();
-  })
-  .catch(err => console.error("Erreur de chargement des armes :", err));
+// --- Chargement du fichier JSON ---
+async function chargerArmes() {
+  try {
+    console.log("🔄 Chargement du fichier armes.json...");
+    const res = await fetch("./data/armes.json");
+    if (!res.ok) throw new Error("Fichier JSON introuvable !");
+    const data = await res.json();
 
-// --- Remplissage des sélecteurs de type d'arme et d'arme ---
+    armesData = data.armes;
+    console.log("✅ Armes chargées :", armesData.length);
+    remplirTypesArmes();
+  } catch (err) {
+    console.error("❌ Erreur de chargement :", err);
+    alert("Impossible de charger les armes. Vérifie le chemin : ./data/armes.json");
+  }
+}
+
+// --- Remplissage des types d’armes ---
 function remplirTypesArmes() {
   const typeSelect = document.getElementById("weaponType");
+  const armeSelect = document.getElementById("weaponName");
+  if (!typeSelect || !armeSelect) return console.error("⚠️ IDs manquants dans le HTML.");
+
   const armesParCategorie = {};
 
-  // Regroupe les armes par catégorie
   armesData.forEach(a => {
     if (!armesParCategorie[a.categorie]) armesParCategorie[a.categorie] = [];
     armesParCategorie[a.categorie].push(a.nom);
   });
 
-  // Remplir le sélecteur des types
+  // Nettoyage et ajout
+  typeSelect.innerHTML = `<option value="">-- Choisir un type --</option>`;
   Object.keys(armesParCategorie).forEach(cat => {
     const opt = document.createElement("option");
     opt.value = cat;
@@ -30,25 +41,29 @@ function remplirTypesArmes() {
     typeSelect.appendChild(opt);
   });
 
-  typeSelect.addEventListener("change", () => remplirArmes(typeSelect.value, armesParCategorie));
+  typeSelect.addEventListener("change", () => {
+    remplirArmes(typeSelect.value, armesParCategorie);
+  });
 }
 
-// Remplit la liste des armes selon la catégorie
+// --- Liste des armes selon la catégorie ---
 function remplirArmes(categorie, armesParCategorie) {
   const armeSelect = document.getElementById("weaponName");
   armeSelect.innerHTML = "";
-  armesParCategorie[categorie].forEach(nom => {
+
+  const armes = armesParCategorie[categorie] || [];
+  armes.forEach(nom => {
     const opt = document.createElement("option");
     opt.value = nom;
     opt.textContent = nom;
     armeSelect.appendChild(opt);
   });
 
-  afficherArme(armeSelect.value);
+  if (armes.length > 0) afficherArme(armes[0]);
   armeSelect.addEventListener("change", () => afficherArme(armeSelect.value));
 }
 
-// --- Affichage des infos et accessoires d’une arme ---
+// --- Affiche stats + accessoires ---
 function afficherArme(nom) {
   const arme = armesData.find(a => a.nom === nom);
   if (!arme) return;
@@ -57,7 +72,7 @@ function afficherArme(nom) {
   afficherAccessoires(arme);
 }
 
-// Affiche les stats d'une arme
+// --- Stats ---
 function afficherStats(arme) {
   const statsDiv = document.getElementById("weaponStats");
   if (!arme.stats) return;
@@ -71,14 +86,13 @@ function afficherStats(arme) {
   `;
 }
 
-// Génère dynamiquement les catégories d'accessoires
+// --- Accessoires dynamiques ---
 function afficherAccessoires(arme) {
   const container = document.getElementById("slots");
   container.innerHTML = "";
 
-  let categories = Object.keys(arme.accessoires);
+  if (!arme.accessoires) return;
 
-  // Trie les catégories dans un ordre logique si présent
   const ordre = [
     "accessoires supérieur",
     "accessoires droit",
@@ -92,16 +106,15 @@ function afficherAccessoires(arme) {
     "accessoire de visée",
     "camouflages"
   ];
-  categories.sort((a, b) => {
-    const ai = ordre.indexOf(a);
-    const bi = ordre.indexOf(b);
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-  });
 
-  // Crée dynamiquement les champs
+  let categories = Object.keys(arme.accessoires).sort(
+    (a, b) => (ordre.indexOf(a) === -1 ? 99 : ordre.indexOf(a)) - (ordre.indexOf(b) === -1 ? 99 : ordre.indexOf(b))
+  );
+
   categories.forEach(cat => {
     const div = document.createElement("div");
     div.className = "mb-3";
+
     const label = document.createElement("label");
     label.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
     label.className = "block text-sm mb-1 text-gray-300";
@@ -123,7 +136,7 @@ function afficherAccessoires(arme) {
   });
 }
 
-// --- Sauvegarde d’une classe localement ---
+// --- Sauvegarde locale d'une classe ---
 document.getElementById("saveBtn").addEventListener("click", () => {
   const armeNom = document.getElementById("weaponName").value;
   const arme = armesData.find(a => a.nom === armeNom);
@@ -142,7 +155,7 @@ document.getElementById("saveBtn").addEventListener("click", () => {
   alert("✅ Classe enregistrée !");
 });
 
-// --- Afficher les classes sauvegardées ---
+// --- Afficher classes sauvegardées ---
 function afficherClasses() {
   const cards = document.getElementById("cards");
   cards.innerHTML = "";
@@ -171,11 +184,12 @@ function supprimerClasse(index) {
   afficherClasses();
 }
 
-// --- Charger les classes au démarrage ---
+// --- Chargement initial ---
 window.addEventListener("load", () => {
   const saved = localStorage.getItem("classesBF6");
   if (saved) {
     classesSauvegardees = JSON.parse(saved);
     afficherClasses();
   }
+  chargerArmes(); // Démarre le chargement des armes
 });
